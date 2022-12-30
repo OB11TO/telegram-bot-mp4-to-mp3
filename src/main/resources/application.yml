@@ -1,0 +1,10 @@
+telegram:
+  botUsername: YouGriffithBot
+  botToken: 5820029268:AAGi7M0EC-Ycm_3NFmMR6Sd9hXMQQ2XM-ZY
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
