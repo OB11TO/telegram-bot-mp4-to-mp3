@@ -3,14 +3,17 @@ package com.ob11to.telegrambotswitch.service;
 import com.ob11to.telegrambotswitch.config.TelegramBotConfig;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.bots.TelegramWebhookBot;
+import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.util.Objects;
+
 @Service
 @RequiredArgsConstructor
-public class TelegramBotService extends TelegramLongPollingBot {
+public class TelegramBotWebHookService extends TelegramWebhookBot {
 
     private final TelegramBotConfig config;
 
@@ -25,7 +28,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
     }
 
     @Override
-    public void onUpdateReceived(Update update) {
+    public BotApiMethod<?> onWebhookUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
             String messageText = update.getMessage().getText();
             long chatId = update.getMessage().getChatId();
@@ -35,14 +38,25 @@ public class TelegramBotService extends TelegramLongPollingBot {
                     startCommandReceived(chatId, update.getMessage().getChat().getFirstName());
                     break;
                 default:
-                    sendMessage(chatId, "Sorry, command was not recognized");
+                    sendMessage(chatId, "Не, таких команд не знаю))");
 
             }
         }
+        return null;
+    }
+
+
+    @Override
+    public String getBotPath() {
+        return config.getBotPath();
     }
 
     private void startCommandReceived(long chatId, String name) {
-        String answer = "Hi, " + name + ", nice to meet you!";
+        String answer = "Хай, " + name + "!";
+        if(Objects.equals(name, "лена")) {
+            String textLena = "Пойдем пить кофе после работы (:";
+            sendMessage(chatId, textLena);
+        }
         sendMessage(chatId, answer);
     }
 

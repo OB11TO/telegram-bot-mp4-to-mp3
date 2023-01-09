@@ -15,6 +15,6 @@ public class TelegramBotConfig {
     //name received during registration
     private String botUsername;
     private String botToken;
-//    private String botPath;
+    private String botPath;
 
 }
