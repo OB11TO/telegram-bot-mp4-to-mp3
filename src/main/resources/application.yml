@@ -1,6 +1,10 @@
 telegram:
-  botUsername: YouGriffithBot
-  botToken: 5820029268:AAGi7M0EC-Ycm_3NFmMR6Sd9hXMQQ2XM-ZY
+  botUsername: name
+  botToken: token
+  botPath: ngrok
+
+server:
+  port: 8000
 
 spring:
   datasource:
