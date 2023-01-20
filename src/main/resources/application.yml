@@ -1,7 +1,7 @@
 telegram:
-  botUsername: YouGriffithBot
-  botToken: 5820029268:AAFTSgfQZQeXrY5Mp6rbdygyHSU4ZyOkHuI
-  botPath: https://3777-45-9-73-12.eu.ngrok.io
+  botUsername: berserk
+  botToken: berserk
+  botPath: berserk
 
 server:
   port: 8000
