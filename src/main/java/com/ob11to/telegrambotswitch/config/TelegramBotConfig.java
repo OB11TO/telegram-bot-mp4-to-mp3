@@ -10,9 +10,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConfigurationProperties(prefix = "telegram")
 public class TelegramBotConfig {
-    //configuration pulling properties from application.properties
 
-    //name received during registration
     private String botUsername;
     private String botToken;
     private String botPath;
