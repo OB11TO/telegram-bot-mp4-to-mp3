@@ -1,7 +1,7 @@
 telegram:
-  botUsername: name
-  botToken: token
-  botPath: ngrok
+  botUsername: berserk
+  botToken: berserk
+  botPath: berserk
 
 server:
   port: 8000

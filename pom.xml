@@ -53,13 +53,14 @@
             <optional>true</optional>
         </dependency>
 
-<!--        Аналог telegramBot внутри -->
+        <!--        Аналог telegramBot внутри -->
         <dependency>
             <groupId>org.telegram</groupId>
             <artifactId>telegrambots-spring-boot-starter</artifactId>
             <version>6.1.0</version>
         </dependency>
 
+        <!--        Библиотека для работы с YouTube-->
 
 
     </dependencies>

@@ -10,8 +10,8 @@ import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 @Slf4j
-@RequiredArgsConstructor
 @RestController
+@RequiredArgsConstructor
 public class WebHookController {
 
     private final TelegramBotWebHookService telegramBot;
@@ -21,3 +21,5 @@ public class WebHookController {
         return telegramBot.onWebhookUpdateReceived(update);
     }
 }
+
+
