@@ -19,7 +19,7 @@ import javax.persistence.Table;
 @AllArgsConstructor
 @Entity
 @Builder
-@Table(name = "uploaded_files")
+@Table(name = "uploaded_files", schema = "griffith")
 public class UploadedFile implements BaseEntity<Long> {
 
     @Id
@@ -29,10 +29,10 @@ public class UploadedFile implements BaseEntity<Long> {
     @Column(name = "youtube_video_id", nullable = false)
     private String youtubeVideoId;
 
-    @Column(name = "telegram_file_id",nullable = false, unique = true )
+    @Column(name = "telegram_file_id", nullable = false, unique = true)
     private String telegramFileId;
 
-    @Column(name = "media_type",nullable = false)
+    @Column(name = "media_type", nullable = false)
     @Enumerated(EnumType.STRING)
     private ContentType type;
 }
