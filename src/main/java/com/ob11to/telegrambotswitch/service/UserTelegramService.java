@@ -27,10 +27,10 @@ public class UserTelegramService {
     }
 
     @Transactional
-    public void createUserTelegram(Long chatId, String userName) {
+    public UserTelegramReadDto createUserTelegram(Long chatId, String userName) {
         UserTelegramCreateDto newUser = new UserTelegramCreateDto(chatId, userName, TelegramBotState.READY);
 
-        var userTelegramReadDto = Optional.of(newUser)
+        return Optional.of(newUser)
                 .map(userTelegramCreateMapper::map)
                 .map(userTelegramRepository::save)
                 .map(userTelegramMapper::map)
