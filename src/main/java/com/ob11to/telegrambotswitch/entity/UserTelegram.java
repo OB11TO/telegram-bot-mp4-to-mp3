@@ -19,8 +19,8 @@ import javax.persistence.Table;
 @AllArgsConstructor
 @Entity
 @Builder
-@Table(name = "users_telegram_bot")
-public class User implements BaseEntity<Long> {
+@Table(name = "users_telegram_bot", schema = "griffith")
+public class UserTelegram implements BaseEntity<Long> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

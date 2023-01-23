@@ -1,6 +1,6 @@
 package com.ob11to.telegrambotswitch.controller;
 
-import com.ob11to.telegrambotswitch.service.TelegramBotWebHookService;
+import com.ob11to.telegrambotswitch.telegram.TelegramBotWebHookService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
