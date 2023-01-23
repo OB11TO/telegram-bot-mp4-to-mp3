@@ -11,4 +11,8 @@ public class ReplyMessageService {
 //        return new SendMessage(id, localeMessageService.getMessage(replyMessage));
         return new SendMessage(id, replyMessage);
     }
+
+    public String getReplyText(String replyText) {
+        return "ВЫБЕРИТЕ ФОРМАТ";
+    }
 }

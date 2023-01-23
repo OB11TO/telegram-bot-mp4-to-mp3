@@ -36,5 +36,10 @@ public class UserTelegramService {
                 .map(userTelegramMapper::map)
                 .orElseThrow();
     }
+
+    @Transactional
+    public void changeBotStateByChatId(Long chatId, TelegramBotState ready) {
+        userTelegramRepository.changeBotStateByChatId(chatId, ready);
+    }
 }
 
