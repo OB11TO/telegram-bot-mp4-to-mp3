@@ -3,9 +3,11 @@ package com.ob11to.telegrambotswitch.telegram;
 import com.ob11to.telegrambotswitch.cache.RequestsStorage;
 import com.ob11to.telegrambotswitch.config.TelegramBotConfig;
 import com.ob11to.telegrambotswitch.dto.Request;
+import com.ob11to.telegrambotswitch.dto.UploadedFileReadDto;
 import com.ob11to.telegrambotswitch.dto.UserTelegramReadDto;
 import com.ob11to.telegrambotswitch.entity.ContentType;
 import com.ob11to.telegrambotswitch.service.ReplyMessageService;
+import com.ob11to.telegrambotswitch.service.UploadedFileService;
 import com.ob11to.telegrambotswitch.service.UserInputParser;
 import com.ob11to.telegrambotswitch.service.UserTelegramService;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +15,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.bots.TelegramWebhookBot;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.send.SendAudio;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendVideo;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -23,6 +28,7 @@ import java.util.Optional;
 
 import static com.ob11to.telegrambotswitch.entity.TelegramBotState.BUSY;
 import static com.ob11to.telegrambotswitch.entity.TelegramBotState.READY;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.BEGIN_LOADING;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.CHOSE_FORMAT;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.CHOSE_QUALITY;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.CREATE;
@@ -52,6 +58,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
     private final UserInputParser userInputParser;
     private final TelegramFacade telegramFacade;
     private final RequestsStorage requestsStorage;
+    private final UploadedFileService uploadedFileService;
 
     @Override
     public String getBotUsername() {
@@ -134,15 +141,54 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
         }
     }
 
-    private void sendFileInFormat(Long chatId, int code, Request userRequest) {
+    private void sendFileInFormat(Long chatId, int code, Request userRequest) throws TelegramApiException {
         if (requestsStorage.getCurrentRequest(chatId) == null) {
             throw new RuntimeException();
         }
-        checkIfFileAlreadyExist(chatId, userRequest);
+        if (!checkIfFileAlreadyExist(chatId, userRequest)) {
+            log.info("Video with id: " + userRequest.getVideoId() + " doesn`t exist in db, start creating");
+
+        }
     }
 
-    private void checkIfFileAlreadyExist(Long chatId, Request userRequest) {
+    private boolean checkIfFileAlreadyExist(Long chatId, Request userRequest) throws TelegramApiException {
+        Optional<UploadedFileReadDto> maybeUploadedFile = uploadedFileService.
+                getFileByVideoIdAndType(userRequest.getVideoId(), userRequest.getFormat());
 
+        if (maybeUploadedFile.isPresent()) {
+            var uploadedFile = maybeUploadedFile.get();
+            log.info("Finding file in db with: " + userRequest.getVideoId() +
+                    " format: " + userRequest.getFormat() + " quality: " + userRequest.getQualityCode());
+
+            execute(replyMessageService.getReplyMessage(chatId, BEGIN_LOADING));
+            try {
+                if (uploadedFile.getType() == ContentType.mp3) {
+                    SendAudio audio = new SendAudio();
+                    audio.setChatId(chatId);
+                    var telegramFileId = uploadedFile.getTelegramFileId();
+                    InputFile inputFile = new InputFile();
+                    inputFile.setMedia(telegramFileId);
+                    audio.setAudio(inputFile);
+                    execute(audio);
+                } else {
+                    SendVideo video = new SendVideo();
+                    video.setChatId(chatId);
+                    var telegramFileId = uploadedFile.getTelegramFileId();
+                    InputFile inputFile = new InputFile();
+                    inputFile.setMedia(telegramFileId);
+                    video.setVideo(inputFile);
+                    execute(video);
+                }
+            } catch (TelegramApiException e) {
+                uploadedFileService.deleteFile(uploadedFile.getTelegramFileId());
+                return false;
+            }
+            log.info("Load file in telegram file with id: " + userRequest.getVideoId() +
+                    " format: " + userRequest.getFormat() + " quality: " + userRequest.getQualityCode());
+            execute(replyMessageService.getReplyMessage(chatId, INFO_AGAIN));
+            return true;
+        }
+        return false;
     }
 
     private void processUpdate(UserTelegramReadDto userTelegram, Message message) {
