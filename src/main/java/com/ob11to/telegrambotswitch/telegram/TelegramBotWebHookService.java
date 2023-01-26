@@ -1,8 +1,10 @@
 package com.ob11to.telegrambotswitch.telegram;
 
+import com.ob11to.telegrambotswitch.cache.RequestsStorage;
 import com.ob11to.telegrambotswitch.config.TelegramBotConfig;
 import com.ob11to.telegrambotswitch.dto.Request;
 import com.ob11to.telegrambotswitch.dto.UserTelegramReadDto;
+import com.ob11to.telegrambotswitch.entity.ContentType;
 import com.ob11to.telegrambotswitch.service.ReplyMessageService;
 import com.ob11to.telegrambotswitch.service.UserInputParser;
 import com.ob11to.telegrambotswitch.service.UserTelegramService;
@@ -22,8 +24,11 @@ import java.util.Optional;
 import static com.ob11to.telegrambotswitch.entity.TelegramBotState.BUSY;
 import static com.ob11to.telegrambotswitch.entity.TelegramBotState.READY;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.CHOSE_FORMAT;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.CHOSE_QUALITY;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.CREATE;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.FILE_FOUND;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.INFO;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.INFO_AFTER_STOP;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.INFO_AGAIN;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.INVALID_INPUT;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.STOP_DOWNLOAD;
@@ -46,6 +51,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
     private final ReplyMessageService replyMessageService;
     private final UserInputParser userInputParser;
     private final TelegramFacade telegramFacade;
+    private final RequestsStorage requestsStorage;
 
     @Override
     public String getBotUsername() {
@@ -77,14 +83,66 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
                     var userTelegram =
                             userTelegramService.createUserTelegram(chatId, update.getMessage().getChat().getUserName());
                     log.info("Create user with chatId:" + userTelegram.getChatId());
+                    execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), CREATE));
                     execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), INFO));
                 } catch (TelegramApiException e) {
                     e.printStackTrace();
                     log.error("Error while executing message ", e);
                 }
             }
+        } else if (update.hasCallbackQuery()) {
+            Long chatId = update.getCallbackQuery().getMessage().getChatId();
+            String answer = update.getCallbackQuery().getData();
+
+            try {
+                Request currentRequest = requestsStorage.getCurrentRequest(chatId);
+                if (requestsStorage.isRequestPresent(chatId)) {
+                    if (!currentRequest.isProcessing())
+                        processCallBack(chatId, answer, currentRequest);
+                }
+            } catch (TelegramApiException e) {
+                log.error("Error while executing message ", e);
+            }
         }
         return null;
+    }
+
+    private void processCallBack(Long chatId, String message, Request userRequest) throws TelegramApiException {
+        switch (message) {
+            case "mp3" -> {
+                log.info("Callback mp3 from chatId: " + chatId);
+                userRequest.setFormat(ContentType.mp3);
+                requestsStorage.updateRequest(chatId, userRequest);
+                sendFileInFormat(chatId, NONE_QUALITY_CODE, userRequest);
+            }
+            case "mp4" -> {
+                log.info("Callback mp4 from chatId: " + chatId);
+                SendMessage choseFormatMessage = new SendMessage(chatId.toString(), replyMessageService.getReplyText(CHOSE_QUALITY));
+                userRequest.setFormat(ContentType.mp4);
+                requestsStorage.updateRequest(chatId, userRequest);
+                choseFormatMessage.setReplyMarkup(telegramFacade.createBlockButtons(telegramFacade.getVideoFormatsButtons()));
+                execute(choseFormatMessage);
+            }
+            case "360p" -> {
+                log.info("Callback 360p from chatId: " + chatId);
+                sendFileInFormat(chatId, MP4_360_QUALITY_CODE, userRequest);
+            }
+            case "720p" -> {
+                log.info("Callback 720p from chatId: " + chatId);
+                sendFileInFormat(chatId, MP4_720_QUALITY_CODE, userRequest);
+            }
+        }
+    }
+
+    private void sendFileInFormat(Long chatId, int code, Request userRequest) {
+        if (requestsStorage.getCurrentRequest(chatId) == null) {
+            throw new RuntimeException();
+        }
+        checkIfFileAlreadyExist(chatId, userRequest);
+    }
+
+    private void checkIfFileAlreadyExist(Long chatId, Request userRequest) {
+
     }
 
     private void processUpdate(UserTelegramReadDto userTelegram, Message message) {
@@ -95,7 +153,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
                 botIsReadyToProcessUrl(userTelegram.getChatId(), message);
             } else if (userTelegram.getState() == BUSY && message.getText().equals("/stop")) {
                 execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), STOP_DOWNLOAD));
-                execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), INFO_AGAIN));
+                execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), INFO_AFTER_STOP));
                 userTelegramService.changeBotStateByChatId(userTelegram.getChatId(), READY);
                 log.info("Change bot state to READY for chatId: " + userTelegram.getChatId());
 
@@ -116,7 +174,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
 
         String videoId = userInputParser.getYouTubeVideoId(message.getText());
 
-        if(videoId == null) {
+        if (videoId == null) {
             execute(replyMessageService.getReplyMessage(chatId, INVALID_INPUT));
             execute(replyMessageService.getReplyMessage(chatId, INFO_AGAIN));
             log.info("Invalid url from user, input: " + message.getText());
@@ -126,15 +184,13 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
             execute(replyMessageService.getReplyMessage(chatId, FILE_FOUND));
             Request userRequest = new Request();
             userRequest.setVideoId(videoId);
-            // TODO: storage.updateRequest(chatId, userRequest);
+            requestsStorage.addRequest(chatId, userRequest);
             log.info("Put request to map with chatId: " + chatId + " videoId: " + videoId);
             SendMessage choseFormatMessage = new SendMessage(chatId.toString(), replyMessageService.getReplyText(CHOSE_FORMAT));
             choseFormatMessage.setReplyMarkup(telegramFacade.createBlockButtons(telegramFacade.getMediaFormats()));
             execute(choseFormatMessage);
         }
     }
-
-
 
 
 }

@@ -30,4 +30,17 @@ public class TelegramFacade {
         inlineKeyboardMarkup.setKeyboard(keyboard);
         return inlineKeyboardMarkup;
     }
+
+    public List<InlineKeyboardButton> getVideoFormatsButtons() {
+        InlineKeyboardButton p360Button = new InlineKeyboardButton();
+        p360Button.setText("360p");
+        p360Button.setCallbackData("360p");
+        InlineKeyboardButton p720Button = new InlineKeyboardButton();
+        p720Button.setText("720p");
+        p720Button.setCallbackData("720p");
+        List<InlineKeyboardButton> buttons = new ArrayList<>();
+        buttons.add(p360Button);
+        buttons.add(p720Button);
+        return buttons;
+    }
 }

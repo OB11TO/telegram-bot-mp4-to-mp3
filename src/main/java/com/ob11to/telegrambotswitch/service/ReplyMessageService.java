@@ -13,6 +13,6 @@ public class ReplyMessageService {
     }
 
     public String getReplyText(String replyText) {
-        return "ВЫБЕРИТЕ ФОРМАТ";
+        return replyText;
     }
 }
