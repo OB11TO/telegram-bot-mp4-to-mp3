@@ -19,7 +19,7 @@ import javax.persistence.Table;
 @AllArgsConstructor
 @Entity
 @Builder
-@Table(name = "uploaded_files", schema = "griffith")
+@Table(name = "uploaded_files")
 public class UploadedFile implements BaseEntity<Long> {
 
     @Id
