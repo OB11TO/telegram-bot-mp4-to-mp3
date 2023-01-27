@@ -3,10 +3,13 @@ package com.ob11to.telegrambotswitch.telegram;
 import com.ob11to.telegrambotswitch.cache.RequestsStorage;
 import com.ob11to.telegrambotswitch.config.TelegramBotConfig;
 import com.ob11to.telegrambotswitch.dto.Request;
+import com.ob11to.telegrambotswitch.dto.Response;
+import com.ob11to.telegrambotswitch.dto.UploadedFileCreateDto;
 import com.ob11to.telegrambotswitch.dto.UploadedFileReadDto;
 import com.ob11to.telegrambotswitch.dto.UserTelegramReadDto;
 import com.ob11to.telegrambotswitch.entity.ContentType;
 import com.ob11to.telegrambotswitch.service.ReplyMessageService;
+import com.ob11to.telegrambotswitch.service.ResponseProcessor;
 import com.ob11to.telegrambotswitch.service.UploadedFileService;
 import com.ob11to.telegrambotswitch.service.UserInputParser;
 import com.ob11to.telegrambotswitch.service.UserTelegramService;
@@ -29,14 +32,18 @@ import java.util.Optional;
 import static com.ob11to.telegrambotswitch.entity.TelegramBotState.BUSY;
 import static com.ob11to.telegrambotswitch.entity.TelegramBotState.READY;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.BEGIN_LOADING;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.CHOSE_ANOTHER_FORMAT;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.CHOSE_FORMAT;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.CHOSE_QUALITY;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.CREATE;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.DONE;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.FILE_FOUND;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.INFO;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.INFO_AFTER_STOP;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.INFO_AGAIN;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.INVALID_INPUT;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.PREPARE_TO_LOAD;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.START;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.STOP_DOWNLOAD;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.WAIT;
 
@@ -59,6 +66,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
     private final TelegramFacade telegramFacade;
     private final RequestsStorage requestsStorage;
     private final UploadedFileService uploadedFileService;
+    private final ResponseProcessor responseProcessor;
 
     @Override
     public String getBotUsername() {
@@ -91,7 +99,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
                             userTelegramService.createUserTelegram(chatId, update.getMessage().getChat().getUserName());
                     log.info("Create user with chatId:" + userTelegram.getChatId());
                     execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), CREATE));
-                    execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), INFO));
+                    execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), START));
                 } catch (TelegramApiException e) {
                     e.printStackTrace();
                     log.error("Error while executing message ", e);
@@ -100,27 +108,30 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
         } else if (update.hasCallbackQuery()) {
             Long chatId = update.getCallbackQuery().getMessage().getChatId();
             String answer = update.getCallbackQuery().getData();
-
-            try {
-                Request currentRequest = requestsStorage.getCurrentRequest(chatId);
-                if (requestsStorage.isRequestPresent(chatId)) {
-                    if (!currentRequest.isProcessing())
-                        processCallBack(chatId, answer, currentRequest);
+            Optional<UserTelegramReadDto> findUserTelegram = userTelegramService.getUserBotChatId(chatId);
+            if (findUserTelegram.isPresent()) {
+                var userTelegram = findUserTelegram.get();
+                try {
+                    Request currentRequest = requestsStorage.getCurrentRequest(chatId);
+                    if (requestsStorage.isRequestPresent(chatId)) {
+                        if (!currentRequest.isProcessing())
+                            processCallBack(chatId, answer, currentRequest, userTelegram.getUsername());
+                    }
+                } catch (TelegramApiException e) {
+                    log.error("Error while executing message ", e);
                 }
-            } catch (TelegramApiException e) {
-                log.error("Error while executing message ", e);
             }
         }
         return null;
     }
 
-    private void processCallBack(Long chatId, String message, Request userRequest) throws TelegramApiException {
+    private void processCallBack(Long chatId, String message, Request userRequest, String userName) throws TelegramApiException {
         switch (message) {
             case "mp3" -> {
                 log.info("Callback mp3 from chatId: " + chatId);
                 userRequest.setFormat(ContentType.mp3);
                 requestsStorage.updateRequest(chatId, userRequest);
-                sendFileInFormat(chatId, NONE_QUALITY_CODE, userRequest);
+                sendFileInFormat(chatId, NONE_QUALITY_CODE, userRequest, userName);
             }
             case "mp4" -> {
                 log.info("Callback mp4 from chatId: " + chatId);
@@ -132,26 +143,96 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
             }
             case "360p" -> {
                 log.info("Callback 360p from chatId: " + chatId);
-                sendFileInFormat(chatId, MP4_360_QUALITY_CODE, userRequest);
+                sendFileInFormat(chatId, MP4_360_QUALITY_CODE, userRequest, userName);
             }
             case "720p" -> {
                 log.info("Callback 720p from chatId: " + chatId);
-                sendFileInFormat(chatId, MP4_720_QUALITY_CODE, userRequest);
+                sendFileInFormat(chatId, MP4_720_QUALITY_CODE, userRequest, userName);
             }
         }
     }
 
-    private void sendFileInFormat(Long chatId, int code, Request userRequest) throws TelegramApiException {
-        if (requestsStorage.getCurrentRequest(chatId) == null) {
-            throw new RuntimeException();
-        }
-        if (!checkIfFileAlreadyExist(chatId, userRequest)) {
-            log.info("Video with id: " + userRequest.getVideoId() + " doesn`t exist in db, start creating");
+    private void sendFileInFormat(Long chatId, int code, Request userRequest, String userName) throws TelegramApiException {
+        try {
+            if (requestsStorage.getCurrentRequest(chatId) == null) {
+                throw new RuntimeException();
+            }
+            if (!checkIfFileAlreadyExist(chatId, userRequest, userName)) {
+                log.info("Video with id: " + userRequest.getVideoId() + " doesn`t exist in db, start creating");
+                if (userRequest.getFormat().equals(ContentType.mp4)) {
+                    userRequest.setQualityCode(code);
+                }
+                userRequest.setProcessing(true);
 
+                requestsStorage.updateRequest(chatId, userRequest);
+                execute(replyMessageService.getReplyMessage(chatId, PREPARE_TO_LOAD));
+                Response userResponse = responseProcessor.processResponse(userRequest);
+                execute(replyMessageService.getReplyMessage(chatId, BEGIN_LOADING));
+
+                log.info("Begin loading file with id: " + userRequest.getVideoId() +
+                        " format: " + userRequest.getFormat() + " quality: " + userRequest.getQualityCode());
+
+              /*  if (mediaCleanerService.getFileSize(userRequest) >= MAX_UPLOADED_FILE_SIZE) {
+                    execute(messageService.getReplyMessage(chatId, FILE_IS_TOO_BIG));
+                    mediaCleanerService.clean(userRequest, true);
+                    throw new RuntimeException();
+                }*/
+                uploadFileInTelegram(chatId, userRequest, userResponse);
+//                mediaCleanerService.clean(userRequest, false);
+                execute(replyMessageService.getReplyMessage(chatId, DONE));
+
+            }
+        } catch (RuntimeException e) {
+            try {
+                //TODO mediaCleanerService.clean(userRequest, true);
+                log.info("Can`t execute format mp4 for video : " + userRequest.getVideoId() + " with quality " + userRequest.getQualityCode());
+                if (requestsStorage.getCurrentRequest(chatId).isProcessing())
+//                    execute(messageService.getReplyMessage(chatId, "response.choseAnotherFormat"));
+                    execute(replyMessageService.getReplyMessage(chatId, CHOSE_ANOTHER_FORMAT));
+            } catch (TelegramApiException telegramApiException) {
+                telegramApiException.printStackTrace();
+            }
         }
+        requestsStorage.removeRequest(chatId);
+        userTelegramService.changeBotStateByChatId(chatId, READY);
+        log.info("Change bot state to READY for chatId: " + chatId);
     }
 
-    private boolean checkIfFileAlreadyExist(Long chatId, Request userRequest) throws TelegramApiException {
+    private void uploadFileInTelegram(Long chatId, Request userRequest, Response userResponse) throws TelegramApiException {
+        String telegramFileId;
+        if (userRequest.getFormat().equals(ContentType.mp4)) {
+            SendVideo video = new SendVideo();
+            video.setChatId(chatId);
+            var name = userResponse.getName();
+            var contentStream = userResponse.getContentStream();
+            InputFile inputFile = new InputFile();
+            inputFile.setMedia(contentStream, name);
+            video.setVideo(inputFile);
+            telegramFileId = execute(video).getVideo().getFileId();
+        } else {
+            SendAudio audio = new SendAudio();
+            audio.setChatId(chatId);
+            var name = userResponse.getName();
+            var contentStream = userResponse.getContentStream();
+            InputFile inputFile = new InputFile();
+            inputFile.setMedia(contentStream, name);
+            audio.setAudio(inputFile);
+            telegramFileId = execute(audio).getAudio().getFileId();
+        }
+        log.info("Load file with id: " + userRequest.getVideoId() +
+                " format: " + userRequest.getFormat() + " quality: " + userRequest.getQualityCode());
+        UploadedFileCreateDto uploadedFileCreateDto = new UploadedFileCreateDto(
+                userResponse.getName(),
+                telegramFileId,
+                userResponse.getContentType()
+        );
+        var file = uploadedFileService.createFile(uploadedFileCreateDto);
+        log.info("Save file with id: " + userRequest.getVideoId() +
+                " format: " + userRequest.getFormat() + " quality: " + userRequest.getQualityCode());
+
+    }
+
+    private boolean checkIfFileAlreadyExist(Long chatId, Request userRequest, String userName) throws TelegramApiException {
         Optional<UploadedFileReadDto> maybeUploadedFile = uploadedFileService.
                 getFileByVideoIdAndType(userRequest.getVideoId(), userRequest.getFormat());
 
@@ -185,7 +266,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
             }
             log.info("Load file in telegram file with id: " + userRequest.getVideoId() +
                     " format: " + userRequest.getFormat() + " quality: " + userRequest.getQualityCode());
-            execute(replyMessageService.getReplyMessage(chatId, INFO_AGAIN));
+            execute(replyMessageService.getReplyMessage(chatId, String.format(DONE, userName)));
             return true;
         }
         return false;
@@ -193,7 +274,9 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
 
     private void processUpdate(UserTelegramReadDto userTelegram, Message message) {
         try {
-            if (message.getText().equals("/start") || message.getText().equals("/info")) {
+            if (message.getText().equals("/start")) {
+                execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), START));
+            } else if (message.getText().equals("/info")) {
                 execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), INFO));
             } else if (userTelegram.getState() == READY && !message.getText().isEmpty()) {
                 botIsReadyToProcessUrl(userTelegram.getChatId(), message);
