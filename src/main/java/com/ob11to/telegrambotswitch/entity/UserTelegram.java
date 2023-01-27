@@ -19,7 +19,7 @@ import javax.persistence.Table;
 @AllArgsConstructor
 @Entity
 @Builder
-@Table(name = "users_telegram_bot", schema = "griffith")
+@Table(name = "users_telegram_bot")
 public class UserTelegram implements BaseEntity<Long> {
 
     @Id

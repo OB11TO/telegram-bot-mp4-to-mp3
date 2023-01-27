@@ -179,7 +179,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
                 }*/
                 uploadFileInTelegram(chatId, userRequest, userResponse);
 //                mediaCleanerService.clean(userRequest, false);
-                execute(replyMessageService.getReplyMessage(chatId, DONE));
+                execute(replyMessageService.getReplyMessage(chatId, String.format(DONE, userName)));
 
             }
         } catch (RuntimeException e) {
