@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+
 @Slf4j
 @Service
 public class YouTubeDownloaderService {
@@ -63,9 +65,20 @@ public class YouTubeDownloaderService {
         }
     }
 
-    // IN PROGRESS
+    //TODO: ПРОВЕРИТЬ РАБОТУ
     public void stopDownloading() {
-        process.destroy();
+        if (process.isAlive()) {
+            var pid = process.pid() + 1;
+            try {
+                var kill = Runtime.getRuntime().exec(String.format("kill %s", pid));
+                kill.destroy();
+                process.destroy();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            log.warn("Process already killed!");
+        }
     }
 
     private String buildCommand(Request request) {
