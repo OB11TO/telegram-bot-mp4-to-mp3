@@ -187,7 +187,6 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
                 //TODO mediaCleanerService.clean(userRequest, true);
                 log.info("Can`t execute format mp4 for video : " + userRequest.getVideoId() + " with quality " + userRequest.getQualityCode());
                 if (requestsStorage.getCurrentRequest(chatId).isProcessing())
-//                    execute(messageService.getReplyMessage(chatId, "response.choseAnotherFormat"));
                     execute(replyMessageService.getReplyMessage(chatId, CHOSE_ANOTHER_FORMAT));
             } catch (TelegramApiException telegramApiException) {
                 telegramApiException.printStackTrace();
@@ -285,9 +284,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
                 execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), INFO_AFTER_STOP));
                 userTelegramService.changeBotStateByChatId(userTelegram.getChatId(), READY);
                 log.info("Change bot state to READY for chatId: " + userTelegram.getChatId());
-
-                //TODO: stop download
-
+                responseProcessor.stopDownload();
             } else if (userTelegram.getState() == BUSY) {
                 execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), WAIT));
             }
