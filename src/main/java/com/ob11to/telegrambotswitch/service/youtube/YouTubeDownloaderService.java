@@ -17,8 +17,10 @@ public class YouTubeDownloaderService {
     private final static String STANDARD_DL_COMMAND_WITH_FORMAT_OPTIONS = "youtube-dl -f %s ";
     private final static String STANDARD_DL_PATH_OPTION = " -o %s/%s.%s ";
 
-    private final static String TERMINAL = "/bin/sh";
-    private final static String END_COMMAND = "-c";
+    private final static String TERMINAL_BASH = "/bin/sh";
+    private final static String TERMINAL_CMD = "cmd.exe";
+    private final static String END_COMMAND_BASH = "-c";
+    private final static String END_COMMAND_CMD = "/c";
 
     private Process process;
 
@@ -36,8 +38,8 @@ public class YouTubeDownloaderService {
         try {
             ProcessBuilder builder = new ProcessBuilder();
             log.info("Start executing command to cmd.exe ");
-            commands[0] = TERMINAL;
-            commands[1] = END_COMMAND;
+            commands[0] = System.getProperty("os.name").equals("Linux") ? TERMINAL_BASH : TERMINAL_CMD;
+            commands[1] = System.getProperty("os.name").equals("Linux") ? END_COMMAND_BASH : END_COMMAND_CMD;
             commands[2] = buildCommand(request);
             builder.command(commands);
             builder.inheritIO();
@@ -70,9 +72,16 @@ public class YouTubeDownloaderService {
         if (process.isAlive()) {
             var pid = process.pid() + 1;
             try {
-                var kill = Runtime.getRuntime().exec(String.format("kill %s", pid));
-                kill.destroy();
-                process.destroy();
+                if(System.getProperty("os.name").equals("Linux")) {
+                    var kill = Runtime.getRuntime().exec(String.format("kill %s", pid));
+                    kill.destroy();
+                    process.destroy();
+                } else {
+                    var kill = Runtime.getRuntime().exec(String.format("taskkill /F /PID  %s", pid));
+                    kill.destroy();
+                    process.destroy();
+                }
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
