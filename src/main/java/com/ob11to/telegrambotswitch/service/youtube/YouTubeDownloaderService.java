@@ -70,20 +70,25 @@ public class YouTubeDownloaderService {
     //TODO: ПРОВЕРИТЬ РАБОТУ
     public void stopDownloading() {
         if (process.isAlive()) {
-            var pid = process.pid() + 1;
+            String nameImageLinux = "youtube-dl";
+            String nameImageWin = "youtube-dl.exe";
+            ProcessBuilder pb = new ProcessBuilder();
+            Process start;
             try {
-                if(System.getProperty("os.name").equals("Linux")) {
-                    var kill = Runtime.getRuntime().exec(String.format("kill %s", pid));
-                    kill.destroy();
-                    process.destroy();
+                if (System.getProperty("os.name").equals("Linux")) {
+                    pb.command(TERMINAL_BASH, END_COMMAND_BASH, String.format("killall %s", nameImageLinux));
                 } else {
-                    var kill = Runtime.getRuntime().exec(String.format("taskkill /F /PID  %s", pid));
-                    kill.destroy();
-                    process.destroy();
+                    pb.command(TERMINAL_CMD, END_COMMAND_CMD, String.format("taskkill /F /IM  %s", nameImageWin));
                 }
+                start = pb.start();
+                start.waitFor();
+                start.destroy();
+                process.destroy();
 
             } catch (IOException e) {
                 e.printStackTrace();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
         } else {
             log.warn("Process already killed!");
