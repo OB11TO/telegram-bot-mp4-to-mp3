@@ -82,8 +82,9 @@ public class YouTubeDownloaderService {
                 }
                 start = pb.start();
                 start.waitFor();
-                start.destroy();
+                log.info("Kill process: " + start.info());
                 process.destroy();
+                start.destroy();
 
             } catch (IOException e) {
                 e.printStackTrace();
