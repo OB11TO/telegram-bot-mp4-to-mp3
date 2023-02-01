@@ -35,6 +35,7 @@ import static com.ob11to.telegrambotswitch.util.MessageResponse.BEGIN_LOADING;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.CHOSE_ANOTHER_FORMAT;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.CHOSE_FORMAT;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.CHOSE_QUALITY;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.CLICK_STOP_IN_READY;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.CREATE;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.DONE;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.FILE_FOUND;
@@ -43,6 +44,7 @@ import static com.ob11to.telegrambotswitch.util.MessageResponse.INFO_AFTER_STOP;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.INFO_AGAIN;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.INVALID_INPUT;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.PREPARE_TO_LOAD;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.SEND_LINK;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.START;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.STOP_DOWNLOAD;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.WAIT;
@@ -88,6 +90,8 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
     public BotApiMethod<?> onWebhookUpdateReceived(Update update) {
         if (update.getMessage() != null && update.getMessage().hasText()) {
             Long chatId = update.getMessage().getChatId();
+            var username = update.getMessage().getChat().getUserName();
+            var firstname = update.getMessage().getChat().getFirstName();
             log.info("Process update from chatId: " + chatId);
             Optional<UserTelegramReadDto> findUserTelegram = userTelegramService.getUserBotChatId(chatId);
             if (findUserTelegram.isPresent()) {
@@ -95,8 +99,9 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
                 processUpdate(userTelegram, update.getMessage());
             } else {
                 try {
+                    var name = username == null ? firstname : username;
                     var userTelegram =
-                            userTelegramService.createUserTelegram(chatId, update.getMessage().getChat().getUserName());
+                            userTelegramService.createUserTelegram(chatId, name);
                     log.info("Create user with chatId:" + userTelegram.getChatId());
                     execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), CREATE));
                     execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), START));
@@ -277,6 +282,9 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
                 execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), START));
             } else if (message.getText().equals("/info")) {
                 execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), INFO));
+            } else if (userTelegram.getState() == READY && message.getText().equals("/stop")) {
+                execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), CLICK_STOP_IN_READY));
+                execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), SEND_LINK));
             } else if (userTelegram.getState() == READY && !message.getText().isEmpty()) {
                 botIsReadyToProcessUrl(userTelegram.getChatId(), message);
             } else if (userTelegram.getState() == BUSY && message.getText().equals("/stop")) {
