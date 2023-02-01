@@ -40,6 +40,8 @@ public class MessageResponse {
     public static final String FILE_FOUND = "Файл найден";
     public static final String CHOSE_ANOTHER_FORMAT = "Выбери другой формат 😒";
     public static final String FILE_IS_TOO_BIG = "Твой файл превышает допустимый размер, я его качать не буду 👿";
+    public static final String CLICK_STOP_IN_READY = "Не получится ничего остановить, я ещё не начал загрузку 🌐";
+    public static final String SEND_LINK = "Пришли мне ссылку на youtube-видео 📽, которое тебе нужно 🎯";
 
 
 }
