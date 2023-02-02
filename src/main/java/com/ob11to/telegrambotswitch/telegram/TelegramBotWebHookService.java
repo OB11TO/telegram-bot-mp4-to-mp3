@@ -45,6 +45,7 @@ import static com.ob11to.telegrambotswitch.util.MessageResponse.INFO_AGAIN;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.INVALID_INPUT;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.PREPARE_TO_LOAD;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.SEND_LINK;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.SEND_TO_TELEGRAM;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.START;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.STOP_DOWNLOAD;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.WAIT;
@@ -140,7 +141,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
             }
             case "mp4" -> {
                 log.info("Callback mp4 from chatId: " + chatId);
-                SendMessage choseFormatMessage = new SendMessage(chatId.toString(), replyMessageService.getReplyText(CHOSE_QUALITY));
+                SendMessage choseFormatMessage = replyMessageService.getReplyText(chatId, CHOSE_QUALITY);
                 userRequest.setFormat(ContentType.mp4);
                 requestsStorage.updateRequest(chatId, userRequest);
                 choseFormatMessage.setReplyMarkup(telegramFacade.createBlockButtons(telegramFacade.getVideoFormatsButtons()));
@@ -171,8 +172,9 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
 
                 requestsStorage.updateRequest(chatId, userRequest);
                 execute(replyMessageService.getReplyMessage(chatId, PREPARE_TO_LOAD));
-                Response userResponse = responseProcessor.processResponse(userRequest);
                 execute(replyMessageService.getReplyMessage(chatId, BEGIN_LOADING));
+                Response userResponse = responseProcessor.processResponse(userRequest);
+                execute(replyMessageService.getReplyMessage(chatId, SEND_TO_TELEGRAM));
 
                 log.info("Begin loading file with id: " + userRequest.getVideoId() +
                         " format: " + userRequest.getFormat() + " quality: " + userRequest.getQualityCode());
@@ -246,6 +248,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
                     " format: " + userRequest.getFormat() + " quality: " + userRequest.getQualityCode());
 
             execute(replyMessageService.getReplyMessage(chatId, BEGIN_LOADING));
+            execute(replyMessageService.getReplyMessage(chatId, SEND_TO_TELEGRAM));
             try {
                 if (uploadedFile.getType() == ContentType.mp3) {
                     SendAudio audio = new SendAudio();
@@ -320,7 +323,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
             userRequest.setVideoId(videoId);
             requestsStorage.addRequest(chatId, userRequest);
             log.info("Put request to map with chatId: " + chatId + " videoId: " + videoId);
-            SendMessage choseFormatMessage = new SendMessage(chatId.toString(), replyMessageService.getReplyText(CHOSE_FORMAT));
+            SendMessage choseFormatMessage = replyMessageService.getReplyText(chatId, CHOSE_FORMAT);
             choseFormatMessage.setReplyMarkup(telegramFacade.createBlockButtons(telegramFacade.getMediaFormats()));
             execute(choseFormatMessage);
         }
