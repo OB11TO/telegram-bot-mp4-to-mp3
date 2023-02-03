@@ -44,7 +44,8 @@ public class MessageResponse {
     public static final String CHOSE_FORMAT = "*Выберите предпочитаемый вариант будем слушать или смотреть?* 🙃";
     public static final String CHOSE_QUALITY = "*Какое хотите качество?*🤔";
     public static final String FILE_FOUND = "*Файл найден* ✅";
-    public static final String CHOSE_ANOTHER_FORMAT = "*Выберите другой формат* 😒";
+    public static final String CHOSE_ANOTHER_FORMAT = "*Произошла непредвиденная ошибка* 😒 \n" +
+            "*Выберите другой формат* 🤕";
     public static final String FILE_IS_TOO_BIG = "*Ваш файл превышает допустимый размер, я его качать не буду* 👿";
     public static final String CLICK_STOP_IN_READY = "*Не получится ничего остановить, я ещё не начинал загрузку* 🌐";
     public static final String SEND_LINK = "*Пришлите мне ссылку на _youtube_ видео 📽, которое вам нужно* 🎯";

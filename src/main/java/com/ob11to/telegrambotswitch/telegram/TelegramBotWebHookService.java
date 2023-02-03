@@ -56,12 +56,12 @@ import static com.ob11to.telegrambotswitch.util.MessageResponse.WAIT;
 @RequiredArgsConstructor
 public class TelegramBotWebHookService extends TelegramWebhookBot {
 
-    private final static double MAX_UPLOADED_FILE_SIZE = 50;
+    private final static double MAX_UPLOADED_FILE_SIZE = 50;  //TODO сделать проверку на максимальный размер файла
     private final static int MP4_360_QUALITY_CODE = 18;
     private final static int MP4_720_QUALITY_CODE = 22;
     private final static int NONE_QUALITY_CODE = 0;
 
-    private static final File PATH = new File("/home/obiito/c/youtube/test");
+    private static final File PATH = new File("/home/obiito/c/youtube/test"); //test
 
     private final TelegramBotConfig config;
     private final UserTelegramService userTelegramService;
@@ -102,8 +102,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
             } else {
                 try {
                     var name = username == null ? firstname : username;
-                    var userTelegram =
-                            userTelegramService.createUserTelegram(chatId, name);
+                    var userTelegram = userTelegramService.createUserTelegram(chatId, name);
                     log.info("Create user with chatId:" + userTelegram.getChatId());
                     execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), CREATE));
                     execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), START));
@@ -135,14 +134,29 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
         return null;
     }
 
-    public void deleteMessage(long chatId, int messageId) {
+    private void processUpdate(UserTelegramReadDto userTelegram, Message message) {
         try {
-            DeleteMessage deleteMessage = new DeleteMessage();
-            deleteMessage.setChatId(chatId);
-            deleteMessage.setMessageId(messageId);
-            execute(deleteMessage);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
+            if (message.getText().equals("/start")) {
+                execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), START));
+            } else if (message.getText().equals("/info")) {
+                execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), INFO));
+            } else if (userTelegram.getState() == READY && message.getText().equals("/stop")) {
+                execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), CLICK_STOP_IN_READY));
+                execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), SEND_LINK));
+            } else if (userTelegram.getState() == READY && !message.getText().isEmpty()) {
+                botIsReadyToProcessUrl(userTelegram.getChatId(), message);
+            } else if (userTelegram.getState() == BUSY && message.getText().equals("/stop")) {
+                execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), STOP_DOWNLOAD));
+                execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), INFO_AFTER_STOP));
+                userTelegramService.changeBotStateByChatId(userTelegram.getChatId(), READY);
+                log.info("Change bot state to READY for chatId: " + userTelegram.getChatId());
+                responseProcessor.stopDownload();
+            } else if (userTelegram.getState() == BUSY) {
+                execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), WAIT));
+            }
+
+        } catch (TelegramApiException ex) {
+            ex.printStackTrace();
         }
     }
 
@@ -191,8 +205,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
                 Response userResponse = responseProcessor.processResponse(userRequest);
                 execute(replyMessageService.getReplyMessage(chatId, SEND_TO_TELEGRAM));
 
-                log.info("Begin loading file with id: " + userRequest.getVideoId() +
-                        " format: " + userRequest.getFormat() + " quality: " + userRequest.getQualityCode());
+                log.info("Begin loading file with id: " + userRequest.getVideoId() + " format: " + userRequest.getFormat() + " quality: " + userRequest.getQualityCode());
 
               /*  if (mediaCleanerService.getFileSize(userRequest) >= MAX_UPLOADED_FILE_SIZE) {
                     execute(messageService.getReplyMessage(chatId, FILE_IS_TOO_BIG));
@@ -240,27 +253,19 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
             audio.setAudio(inputFile);
             telegramFileId = execute(audio).getAudio().getFileId();
         }
-        log.info("Load file with id: " + userRequest.getVideoId() +
-                " format: " + userRequest.getFormat() + " quality: " + userRequest.getQualityCode());
-        UploadedFileCreateDto uploadedFileCreateDto = new UploadedFileCreateDto(
-                userResponse.getName(),
-                telegramFileId,
-                userResponse.getContentType()
-        );
+        log.info("Load file with id: " + userRequest.getVideoId() + " format: " + userRequest.getFormat() + " quality: " + userRequest.getQualityCode());
+        UploadedFileCreateDto uploadedFileCreateDto = new UploadedFileCreateDto(userResponse.getName(), telegramFileId, userResponse.getContentType());
         var file = uploadedFileService.createFile(uploadedFileCreateDto);
-        log.info("Save file with id: " + userRequest.getVideoId() +
-                " format: " + userRequest.getFormat() + " quality: " + userRequest.getQualityCode());
+        log.info("Save file with id: " + userRequest.getVideoId() + " format: " + userRequest.getFormat() + " quality: " + userRequest.getQualityCode());
 
     }
 
     private boolean checkIfFileAlreadyExist(Long chatId, Request userRequest, String userName) throws TelegramApiException {
-        Optional<UploadedFileReadDto> maybeUploadedFile = uploadedFileService.
-                getFileByVideoIdAndType(userRequest.getVideoId(), userRequest.getFormat());
+        Optional<UploadedFileReadDto> maybeUploadedFile = uploadedFileService.getFileByVideoIdAndType(userRequest.getVideoId(), userRequest.getFormat());
 
         if (maybeUploadedFile.isPresent()) {
             var uploadedFile = maybeUploadedFile.get();
-            log.info("Finding file in db with: " + userRequest.getVideoId() +
-                    " format: " + userRequest.getFormat() + " quality: " + userRequest.getQualityCode());
+            log.info("Finding file in db with: " + userRequest.getVideoId() + " format: " + userRequest.getFormat() + " quality: " + userRequest.getQualityCode());
 
             execute(replyMessageService.getReplyMessage(chatId, BEGIN_LOADING));
             execute(replyMessageService.getReplyMessage(chatId, SEND_TO_TELEGRAM));
@@ -286,38 +291,11 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
                 uploadedFileService.deleteFile(uploadedFile.getTelegramFileId());
                 return false;
             }
-            log.info("Load file in telegram file with id: " + userRequest.getVideoId() +
-                    " format: " + userRequest.getFormat() + " quality: " + userRequest.getQualityCode());
+            log.info("Load file in telegram file with id: " + userRequest.getVideoId() + " format: " + userRequest.getFormat() + " quality: " + userRequest.getQualityCode());
             execute(replyMessageService.getReplyMessage(chatId, String.format(DONE, userName)));
             return true;
         }
         return false;
-    }
-
-    private void processUpdate(UserTelegramReadDto userTelegram, Message message) {
-        try {
-            if (message.getText().equals("/start")) {
-                execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), START));
-            } else if (message.getText().equals("/info")) {
-                execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), INFO));
-            } else if (userTelegram.getState() == READY && message.getText().equals("/stop")) {
-                execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), CLICK_STOP_IN_READY));
-                execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), SEND_LINK));
-            } else if (userTelegram.getState() == READY && !message.getText().isEmpty()) {
-                botIsReadyToProcessUrl(userTelegram.getChatId(), message);
-            } else if (userTelegram.getState() == BUSY && message.getText().equals("/stop")) {
-                execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), STOP_DOWNLOAD));
-                execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), INFO_AFTER_STOP));
-                userTelegramService.changeBotStateByChatId(userTelegram.getChatId(), READY);
-                log.info("Change bot state to READY for chatId: " + userTelegram.getChatId());
-                responseProcessor.stopDownload();
-            } else if (userTelegram.getState() == BUSY) {
-                execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), WAIT));
-            }
-
-        } catch (TelegramApiException ex) {
-            ex.printStackTrace();
-        }
     }
 
     private void botIsReadyToProcessUrl(Long chatId, Message message) throws TelegramApiException {
@@ -344,5 +322,14 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
         }
     }
 
-
+    public void deleteMessage(long chatId, int messageId) {
+        try {
+            DeleteMessage deleteMessage = new DeleteMessage();
+            deleteMessage.setChatId(chatId);
+            deleteMessage.setMessageId(messageId);
+            execute(deleteMessage);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
 }
