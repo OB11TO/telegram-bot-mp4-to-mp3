@@ -21,6 +21,7 @@ import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendAudio;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendVideo;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -114,14 +115,17 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
         } else if (update.hasCallbackQuery()) {
             Long chatId = update.getCallbackQuery().getMessage().getChatId();
             String answer = update.getCallbackQuery().getData();
+            Integer messageId = update.getCallbackQuery().getMessage().getMessageId();
             Optional<UserTelegramReadDto> findUserTelegram = userTelegramService.getUserBotChatId(chatId);
             if (findUserTelegram.isPresent()) {
                 var userTelegram = findUserTelegram.get();
                 try {
                     Request currentRequest = requestsStorage.getCurrentRequest(chatId);
                     if (requestsStorage.isRequestPresent(chatId)) {
-                        if (!currentRequest.isProcessing())
+                        if (!currentRequest.isProcessing()) {
+                            deleteMessage(chatId, messageId);
                             processCallBack(chatId, answer, currentRequest, userTelegram.getUsername());
+                        }
                     }
                 } catch (TelegramApiException e) {
                     log.error("Error while executing message ", e);
@@ -129,6 +133,17 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
             }
         }
         return null;
+    }
+
+    public void deleteMessage(long chatId, int messageId) {
+        try {
+            DeleteMessage deleteMessage = new DeleteMessage();
+            deleteMessage.setChatId(chatId);
+            deleteMessage.setMessageId(messageId);
+            execute(deleteMessage);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
     }
 
     private void processCallBack(Long chatId, String message, Request userRequest, String userName) throws TelegramApiException {
