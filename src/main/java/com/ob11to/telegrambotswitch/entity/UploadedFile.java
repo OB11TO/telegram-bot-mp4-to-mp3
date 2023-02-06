@@ -20,7 +20,7 @@ import javax.persistence.Table;
 @Entity
 @Builder
 @Table(name = "uploaded_files")
-public class UploadedFile implements BaseEntity<Long> {
+public class UploadedFile extends AuditingEntity<Long> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

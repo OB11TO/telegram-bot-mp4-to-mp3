@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.Optional;
 
 @Repository
@@ -16,8 +17,10 @@ public interface UserTelegramRepository extends JpaRepository<UserTelegram, Long
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("update UserTelegram u " +
-            "set u.botState = :ready " +
+            "set " +
+            "u.botState = :ready, " +
+            "u.modifiedAt = :newTime " +
             "where u.chatId = :chatId"
     )
-    void changeBotStateByChatId(Long chatId, TelegramBotState ready);
+    void changeBotStateByChatId(Long chatId, TelegramBotState ready, Instant newTime);
 }

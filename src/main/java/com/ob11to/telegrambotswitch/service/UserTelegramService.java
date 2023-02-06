@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.Optional;
 
 @Service
@@ -39,7 +40,8 @@ public class UserTelegramService {
 
     @Transactional
     public void changeBotStateByChatId(Long chatId, TelegramBotState ready) {
-        userTelegramRepository.changeBotStateByChatId(chatId, ready);
+        var newTime = Instant.now();
+        userTelegramRepository.changeBotStateByChatId(chatId, ready, newTime);
     }
 }
 
