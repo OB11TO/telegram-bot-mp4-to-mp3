@@ -20,7 +20,7 @@ import javax.persistence.Table;
 @Entity
 @Builder
 @Table(name = "users_telegram_bot")
-public class UserTelegram implements BaseEntity<Long> {
+public class UserTelegram extends AuditingEntity<Long> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
