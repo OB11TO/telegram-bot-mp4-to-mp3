@@ -40,9 +40,9 @@ import static com.ob11to.telegrambotswitch.util.MessageResponse.CLICK_STOP_IN_RE
 import static com.ob11to.telegrambotswitch.util.MessageResponse.CREATE;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.DONE;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.FILE_FOUND;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.HELP;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.INFO;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.INFO_AFTER_STOP;
-import static com.ob11to.telegrambotswitch.util.MessageResponse.INFO_AGAIN;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.INVALID_INPUT;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.PREPARE_TO_LOAD;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.SEND_LINK;
@@ -138,6 +138,8 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
         try {
             if (message.getText().equals("/start")) {
                 execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), START));
+            } else if (message.getText().equals("/help")) {
+                execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), HELP));
             } else if (message.getText().equals("/info")) {
                 execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), INFO));
             } else if (userTelegram.getState() == READY && message.getText().equals("/stop")) {
@@ -306,7 +308,6 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
 
         if (videoId == null) {
             execute(replyMessageService.getReplyMessage(chatId, INVALID_INPUT));
-            execute(replyMessageService.getReplyMessage(chatId, INFO_AGAIN));
             log.info("Invalid url from user, input: " + message.getText());
             userTelegramService.changeBotStateByChatId(chatId, READY);
             log.info("Change bot state to READY for chatId: " + chatId);
