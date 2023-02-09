@@ -58,7 +58,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
 
     private final static double MAX_UPLOADED_FILE_SIZE = 50;  //TODO сделать проверку на максимальный размер файла
     private final static String MP4_360_QUALITY_CODE = "18";
-    private final static String MP4_720_QUALITY_CODE = "best";
+    private final static String MP4_720_QUALITY_CODE = "136";
     private final static String NONE_QUALITY_CODE = "0";
 
     private static final File PATH = new File("/home/obiito/c/youtube/test"); //test
