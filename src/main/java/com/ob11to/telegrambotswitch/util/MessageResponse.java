@@ -55,7 +55,7 @@ public class MessageResponse {
     public static final String INVALID_INPUT = "*🔮: Что это? Ничего не разобрать, проверь ссылку на _Youtube_ видео 📽* ";
     public static final String CHOSE_FORMAT = "*🔮: Выбери нужный формат, будем слушать или смотреть?* 🙃";
     public static final String CHOSE_QUALITY = "*🔮: Какое хочешь качество?*🤔";
-    public static final String FILE_FOUND = "*🔮: Я нашел файл* ✅";
+    public static final String FILE_FOUND = "*🔮: Нашёл файл* ✅";
     public static final String CHOSE_ANOTHER_FORMAT = "*🔮: Произошла непредвиденная ошибка* 😒 \n" +
             "*Выбери другой формат и скинь ссылку заново* 🤕";
     public static final String FILE_IS_TOO_BIG = "*🔮: Твой файл превышает допустимый размер, я его качать не буду* 👿";
