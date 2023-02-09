@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.io.IOException;
 
 @Slf4j
@@ -15,7 +16,7 @@ public class YouTubeDownloaderService {
 
     private final static String YOUTUBE_VIDEO_URL = "https://www.youtube.com/watch?v=%s";
     private final static String STANDARD_DL_COMMAND_WITH_FORMAT_OPTIONS = "youtube-dl -f %s ";
-    private final static String STANDARD_DL_PATH_OPTION = " -o %s/%s.%s ";
+//    private final static String STANDARD_DL_PATH_OPTION = " -o %s/%(title)s.%(ext)s ";
 
     private final static String TERMINAL_BASH = "/bin/sh";
     private final static String TERMINAL_CMD = "cmd.exe";
@@ -40,8 +41,9 @@ public class YouTubeDownloaderService {
             log.info("Start executing command to cmd.exe ");
             commands[0] = System.getProperty("os.name").equals("Linux") ? TERMINAL_BASH : TERMINAL_CMD;
             commands[1] = System.getProperty("os.name").equals("Linux") ? END_COMMAND_BASH : END_COMMAND_CMD;
-            commands[2] = buildCommand(request);
+            commands[2] = buildCommandTest(request);
             builder.command(commands);
+            builder.directory(new File(folderManagerService.getPath()));
             builder.inheritIO();
             builder.redirectErrorStream(true);
 
@@ -103,9 +105,14 @@ public class YouTubeDownloaderService {
         } else {
             finalFormat = String.format(STANDARD_DL_COMMAND_WITH_FORMAT_OPTIONS, request.getQualityCode());
         }
-        return finalFormat +
-                String.format(STANDARD_DL_PATH_OPTION,
-                        folderManagerService.getPath(), request.getVideoId(), request.getFormat().name())
+        return finalFormat
+                + String.format(YOUTUBE_VIDEO_URL, request.getVideoId());
+    }
+
+    private String buildCommandTest(Request request) {
+        String finalFormat;
+        finalFormat = String.format(STANDARD_DL_COMMAND_WITH_FORMAT_OPTIONS, request.getQualityCode());
+        return finalFormat
                 + String.format(YOUTUBE_VIDEO_URL, request.getVideoId());
     }
 }

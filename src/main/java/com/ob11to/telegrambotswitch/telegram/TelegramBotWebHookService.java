@@ -8,6 +8,7 @@ import com.ob11to.telegrambotswitch.dto.UploadedFileCreateDto;
 import com.ob11to.telegrambotswitch.dto.UploadedFileReadDto;
 import com.ob11to.telegrambotswitch.dto.UserTelegramReadDto;
 import com.ob11to.telegrambotswitch.entity.ContentType;
+import com.ob11to.telegrambotswitch.service.FolderManagerService;
 import com.ob11to.telegrambotswitch.service.ReplyMessageService;
 import com.ob11to.telegrambotswitch.service.ResponseProcessor;
 import com.ob11to.telegrambotswitch.service.UploadedFileService;
@@ -28,6 +29,8 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
 
 import static com.ob11to.telegrambotswitch.entity.TelegramBotState.BUSY;
@@ -58,8 +61,8 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
 
     private final static double MAX_UPLOADED_FILE_SIZE = 50;  //TODO сделать проверку на максимальный размер файла
     private final static String MP4_360_QUALITY_CODE = "18";
-    private final static String MP4_720_QUALITY_CODE = "136";
-    private final static String NONE_QUALITY_CODE = "0";
+    private final static String MP4_720_QUALITY_CODE = "136+140";
+    private final static String MP3_QUALITY_CODE = "140";
 
     private static final File PATH = new File("/home/obiito/c/youtube/test"); //test
 
@@ -71,6 +74,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
     private final RequestsStorage requestsStorage;
     private final UploadedFileService uploadedFileService;
     private final ResponseProcessor responseProcessor;
+    private final FolderManagerService folderManagerService;
 
     @Override
     public String getBotUsername() {
@@ -168,7 +172,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
                 log.info("Callback mp3 from chatId: " + chatId);
                 userRequest.setFormat(ContentType.mp3);
                 requestsStorage.updateRequest(chatId, userRequest);
-                sendFileInFormat(chatId, NONE_QUALITY_CODE, userRequest, userName);
+                sendFileInFormat(chatId, MP3_QUALITY_CODE, userRequest, userName);
             }
             case "mp4" -> {
                 log.info("Callback mp4 from chatId: " + chatId);
@@ -196,9 +200,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
             }
             if (!checkIfFileAlreadyExist(chatId, userRequest, userName)) {
                 log.info("Video with id: " + userRequest.getVideoId() + " doesn`t exist in db, start creating");
-                if (userRequest.getFormat().equals(ContentType.mp4)) {
-                    userRequest.setQualityCode(code);
-                }
+                userRequest.setQualityCode(code);
                 userRequest.setProcessing(true);
 
                 requestsStorage.updateRequest(chatId, userRequest);
@@ -239,27 +241,35 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
         if (userRequest.getFormat().equals(ContentType.mp4)) {
             SendVideo video = new SendVideo();
             video.setChatId(chatId);
-            var name = userResponse.getName();
-            var contentStream = userResponse.getContentStream();
-            InputFile inputFile = new InputFile();
-            inputFile.setMedia(contentStream, name);
+            InputFile inputFile = getInputFile(userResponse, "mp4");
             video.setVideo(inputFile);
             telegramFileId = execute(video).getVideo().getFileId();
         } else {
             SendAudio audio = new SendAudio();
             audio.setChatId(chatId);
-            var name = userResponse.getName();
-            var contentStream = userResponse.getContentStream();
-            InputFile inputFile = new InputFile();
-            inputFile.setMedia(contentStream, name);
+            InputFile inputFile = getInputFile(userResponse, "m4a");
             audio.setAudio(inputFile);
             telegramFileId = execute(audio).getAudio().getFileId();
         }
-        log.info("Load file with id: " + userRequest.getVideoId() + " format: " + userRequest.getFormat() + " quality: " + userRequest.getQualityCode());
-        UploadedFileCreateDto uploadedFileCreateDto = new UploadedFileCreateDto(userResponse.getName(), telegramFileId, userResponse.getContentType());
+        log.info("Load file with id: " + userRequest.getVideoId() +
+                " format: " + userRequest.getFormat() + " quality: " + userRequest.getQualityCode());
+        UploadedFileCreateDto uploadedFileCreateDto =
+                new UploadedFileCreateDto(userResponse.getName(), telegramFileId, userResponse.getContentType());
         var file = uploadedFileService.createFile(uploadedFileCreateDto);
-        log.info("Save file with id: " + userRequest.getVideoId() + " format: " + userRequest.getFormat() + " quality: " + userRequest.getQualityCode());
+        log.info("Save file with id: " + userRequest.getVideoId() +
+                " format: " + userRequest.getFormat() + " quality: " + userRequest.getQualityCode());
 
+    }
+
+    private InputFile getInputFile(Response userResponse, String type) {
+        var name = userResponse.getName();
+        File path = new File(folderManagerService.getPath());
+        File[] matchingFiles = path.listFiles((dir, file) -> file.contains(name) && file.endsWith(type));
+        Optional<File> maybeFile = Arrays.stream(Objects.requireNonNull(matchingFiles)).findFirst();
+        var file = maybeFile.orElseThrow(() -> new RuntimeException("File is not found"));
+        InputFile inputFile = new InputFile();
+        inputFile.setMedia(file);
+        return inputFile;
     }
 
     private boolean checkIfFileAlreadyExist(Long chatId, Request userRequest, String userName) throws TelegramApiException {
