@@ -57,9 +57,9 @@ import static com.ob11to.telegrambotswitch.util.MessageResponse.WAIT;
 public class TelegramBotWebHookService extends TelegramWebhookBot {
 
     private final static double MAX_UPLOADED_FILE_SIZE = 50;  //TODO сделать проверку на максимальный размер файла
-    private final static int MP4_360_QUALITY_CODE = 18;
-    private final static int MP4_720_QUALITY_CODE = 22;
-    private final static int NONE_QUALITY_CODE = 0;
+    private final static String MP4_360_QUALITY_CODE = "18";
+    private final static String MP4_720_QUALITY_CODE = "136";
+    private final static String NONE_QUALITY_CODE = "0";
 
     private static final File PATH = new File("/home/obiito/c/youtube/test"); //test
 
@@ -189,7 +189,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
         }
     }
 
-    private void sendFileInFormat(Long chatId, int code, Request userRequest, String userName) throws TelegramApiException {
+    private void sendFileInFormat(Long chatId, String code, Request userRequest, String userName) throws TelegramApiException {
         try {
             if (requestsStorage.getCurrentRequest(chatId) == null) {
                 throw new RuntimeException();

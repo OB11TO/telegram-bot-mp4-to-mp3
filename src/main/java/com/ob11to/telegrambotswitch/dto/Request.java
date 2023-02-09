@@ -16,7 +16,7 @@ public class Request {
 
     private ContentType format;
 
-    private int qualityCode;
+    private String qualityCode;
 
     private boolean isProcessing = false;
 

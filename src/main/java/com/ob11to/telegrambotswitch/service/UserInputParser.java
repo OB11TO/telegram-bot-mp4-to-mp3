@@ -31,7 +31,7 @@ public class UserInputParser {
         return null;
     }
 
-    public Request processInputMessage(String message, ContentType type, int code) {
+    public Request processInputMessage(String message, ContentType type, String code) {
         return new Request(getYouTubeVideoId(message),
                 type,
                 code,
