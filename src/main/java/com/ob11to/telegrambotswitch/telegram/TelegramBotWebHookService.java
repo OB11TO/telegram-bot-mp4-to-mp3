@@ -43,6 +43,7 @@ import static com.ob11to.telegrambotswitch.util.MessageResponse.CLICK_STOP_IN_RE
 import static com.ob11to.telegrambotswitch.util.MessageResponse.CREATE;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.DONE;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.FILE_FOUND;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.FILE_IS_TOO_BIG;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.HELP;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.INFO;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.INFO_AFTER_STOP;
@@ -65,6 +66,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
     private final static String MP3_QUALITY_CODE = "140";
     private final static Integer MP4_360 = 360;
     private final static Integer MP4_720 = 720;
+    private final static Integer MP3 = 0;
 
     private static final File PATH = new File("/home/obiito/c/youtube/test"); //test
 
@@ -173,6 +175,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
             case "mp3" -> {
                 log.info("Callback mp3 from chatId: " + chatId);
                 userRequest.setFormat(ContentType.mp3);
+                userRequest.setQualityVideo(MP3);
                 requestsStorage.updateRequest(chatId, userRequest);
                 sendFileInFormat(chatId, MP3_QUALITY_CODE, userRequest, userName);
             }
@@ -215,20 +218,20 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
 
                 log.info("Begin loading file with id: " + userRequest.getVideoId() + " format: " + userRequest.getFormat() + " quality: " + userRequest.getQualityCode());
 
-              /*  if (mediaCleanerService.getFileSize(userRequest) >= MAX_UPLOADED_FILE_SIZE) {
-                    execute(messageService.getReplyMessage(chatId, FILE_IS_TOO_BIG));
-                    mediaCleanerService.clean(userRequest, true);
+                if (folderManagerService.getFileSize(userRequest) >= MAX_UPLOADED_FILE_SIZE) {
+                    execute(replyMessageService.getReplyMessage(chatId, FILE_IS_TOO_BIG));
+                    folderManagerService.clean(userRequest, false);
                     throw new RuntimeException();
-                }*/
+                }
                 uploadFileInTelegram(chatId, userRequest, userResponse);
-//                mediaCleanerService.clean(userRequest, false);
+                folderManagerService.clean(userRequest, false);
                 execute(replyMessageService.getReplyMessage(chatId, String.format(DONE, userName)));
 
             }
         } catch (RuntimeException e) {
             try {
-                //TODO mediaCleanerService.clean(userRequest, true);
                 log.info("Can`t execute format mp4 for video : " + userRequest.getVideoId() + " with quality " + userRequest.getQualityCode());
+                folderManagerService.clean(userRequest, false);
                 if (requestsStorage.getCurrentRequest(chatId).isProcessing())
                     execute(replyMessageService.getReplyMessage(chatId, CHOSE_ANOTHER_FORMAT));
             } catch (TelegramApiException telegramApiException) {
