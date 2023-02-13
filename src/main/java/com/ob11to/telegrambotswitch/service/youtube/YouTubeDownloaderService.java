@@ -3,6 +3,7 @@ package com.ob11to.telegrambotswitch.service.youtube;
 import com.ob11to.telegrambotswitch.dto.Request;
 import com.ob11to.telegrambotswitch.entity.ContentType;
 import com.ob11to.telegrambotswitch.service.FolderManagerService;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,13 +16,16 @@ import java.io.IOException;
 public class YouTubeDownloaderService {
 
     private final static String YOUTUBE_VIDEO_URL = "https://www.youtube.com/watch?v=%s";
-    private final static String STANDARD_DL_COMMAND_WITH_FORMAT_OPTIONS = "youtube-dl -f %s ";
+    private final static String STANDARD_DL_COMMAND_WITH_FORMAT_OPTIONS = "yt-dlp -f %s ";
 //    private final static String STANDARD_DL_PATH_OPTION = " -o %s/%(title)s.%(ext)s ";
 
     private final static String TERMINAL_BASH = "/bin/sh";
     private final static String TERMINAL_CMD = "cmd.exe";
     private final static String END_COMMAND_BASH = "-c";
     private final static String END_COMMAND_CMD = "/c";
+
+    @Setter
+    private String LINK;
 
     private Process process;
 
@@ -72,7 +76,7 @@ public class YouTubeDownloaderService {
     //TODO: ПРОВЕРИТЬ РАБОТУ
     public void stopDownloading() {
         if (process.isAlive()) {
-            String nameImageLinux = "youtube-dl";
+            String nameImageLinux = "yt-dlp";
             String nameImageWin = "youtube-dl.exe";
             ProcessBuilder pb = new ProcessBuilder();
             Process start;
@@ -113,6 +117,6 @@ public class YouTubeDownloaderService {
         String finalFormat;
         finalFormat = String.format(STANDARD_DL_COMMAND_WITH_FORMAT_OPTIONS, request.getQualityCode());
         return finalFormat
-                + String.format(YOUTUBE_VIDEO_URL, request.getVideoId());
+                + LINK;
     }
 }
