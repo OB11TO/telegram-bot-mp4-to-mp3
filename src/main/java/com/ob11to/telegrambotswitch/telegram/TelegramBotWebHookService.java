@@ -220,7 +220,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
 
                 if (folderManagerService.getFileSize(userRequest) >= MAX_UPLOADED_FILE_SIZE) {
                     execute(replyMessageService.getReplyMessage(chatId, FILE_IS_TOO_BIG));
-                    folderManagerService.clean(userRequest, false);
+                    folderManagerService.clean(userRequest, true);
                     throw new RuntimeException();
                 }
                 uploadFileInTelegram(chatId, userRequest, userResponse);
@@ -324,6 +324,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
     private void botIsReadyToProcessUrl(Long chatId, Message message) throws TelegramApiException {
         userTelegramService.changeBotStateByChatId(chatId, BUSY);
         log.info("Change bot state to BUSY for chatId: " + chatId);
+
 
         String videoId = userInputParser.getYouTubeVideoId(message.getText());
 

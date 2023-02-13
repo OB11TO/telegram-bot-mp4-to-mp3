@@ -46,8 +46,9 @@ public class FolderManagerService {
 
     public double getFileSize(Request request) {
         File path = new File(getPath());
-        File[] matchingFiles = path.listFiles((dir, file) -> file.contains(request.getVideoId()) && file.endsWith(request.getFormat().toString()));
+        File[] matchingFiles = path.listFiles((dir, file) -> file.contains(request.getVideoId()));
         Optional<File> maybeFile = Arrays.stream(Objects.requireNonNull(matchingFiles)).findFirst();
+        //TODO: доделать
         double size = (double) maybeFile.get().length();
         return size / 1024 / 1024;
     }
