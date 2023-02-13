@@ -8,4 +8,5 @@ public class UploadedFileCreateDto {
     String youtubeVideoId;
     String telegramFileId;
     ContentType type;
+    Integer qualityVideo;
 }

@@ -20,6 +20,8 @@ public class Request {
 
     private boolean isProcessing = false;
 
+    private Integer qualityVideo;
+
     public String getFullName() {
         return videoId + "." + format;
     }

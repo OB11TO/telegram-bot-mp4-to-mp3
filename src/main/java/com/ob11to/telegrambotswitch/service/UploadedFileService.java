@@ -21,8 +21,8 @@ public class UploadedFileService {
     private final UploadedFileReadMapper uploadedFileReadMapper;
     private final UploadedFileCreateMapper uploadedFileCreateMapper;
 
-    public Optional<UploadedFileReadDto> getFileByVideoIdAndType(String videoId, ContentType format) {
-        return uploadedFileRepository.findByVideoIdAndFormat(videoId, format)
+    public Optional<UploadedFileReadDto> getFileByVideoIdAndType(String videoId, ContentType format, Integer qualityVideo) {
+        return uploadedFileRepository.findByVideoIdAndFormat(videoId, format, qualityVideo)
                 .map(uploadedFileReadMapper::map);
 
     }

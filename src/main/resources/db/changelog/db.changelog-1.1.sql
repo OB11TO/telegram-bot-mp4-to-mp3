@@ -10,6 +10,3 @@ ALTER TABLE users_telegram_bot
 --changeset obito:2
 ALTER TABLE uploaded_files
     ADD COLUMN created_at TIMESTAMP;
-
-ALTER TABLE uploaded_files
-    ADD COLUMN modified_at TIMESTAMP;
