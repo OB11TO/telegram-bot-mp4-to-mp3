@@ -9,4 +9,5 @@ public class UploadedFileReadDto {
     String youtubeVideoId;
     String telegramFileId;
     ContentType type;
+    Integer qualityVideo;
 }

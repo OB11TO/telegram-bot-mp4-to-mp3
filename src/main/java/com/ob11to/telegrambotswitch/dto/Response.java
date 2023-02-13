@@ -20,6 +20,8 @@ public class Response {
 
     private String path;
 
+    private Integer qualityVideo;
+
     public InputStream getContentStream(){
         try {
             return new FileInputStream(path + "/" + name + "." + contentType);

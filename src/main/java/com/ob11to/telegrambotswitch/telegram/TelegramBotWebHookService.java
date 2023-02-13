@@ -63,6 +63,8 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
     private final static String MP4_360_QUALITY_CODE = "18";
     private final static String MP4_720_QUALITY_CODE = "136+140";
     private final static String MP3_QUALITY_CODE = "140";
+    private final static Integer MP4_360 = 360;
+    private final static Integer MP4_720 = 720;
 
     private static final File PATH = new File("/home/obiito/c/youtube/test"); //test
 
@@ -184,10 +186,12 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
             }
             case "360p" -> {
                 log.info("Callback 360p from chatId: " + chatId);
+                userRequest.setQualityVideo(MP4_360);
                 sendFileInFormat(chatId, MP4_360_QUALITY_CODE, userRequest, userName);
             }
             case "720p" -> {
                 log.info("Callback 720p from chatId: " + chatId);
+                userRequest.setQualityVideo(MP4_720);
                 sendFileInFormat(chatId, MP4_720_QUALITY_CODE, userRequest, userName);
             }
         }
@@ -254,7 +258,11 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
         log.info("Load file with id: " + userRequest.getVideoId() +
                 " format: " + userRequest.getFormat() + " quality: " + userRequest.getQualityCode());
         UploadedFileCreateDto uploadedFileCreateDto =
-                new UploadedFileCreateDto(userResponse.getName(), telegramFileId, userResponse.getContentType());
+                new UploadedFileCreateDto(
+                        userResponse.getName(),
+                        telegramFileId,
+                        userResponse.getContentType(),
+                        userResponse.getQualityVideo());
         var file = uploadedFileService.createFile(uploadedFileCreateDto);
         log.info("Save file with id: " + userRequest.getVideoId() +
                 " format: " + userRequest.getFormat() + " quality: " + userRequest.getQualityCode());
@@ -273,7 +281,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
     }
 
     private boolean checkIfFileAlreadyExist(Long chatId, Request userRequest, String userName) throws TelegramApiException {
-        Optional<UploadedFileReadDto> maybeUploadedFile = uploadedFileService.getFileByVideoIdAndType(userRequest.getVideoId(), userRequest.getFormat());
+        Optional<UploadedFileReadDto> maybeUploadedFile = uploadedFileService.getFileByVideoIdAndType(userRequest.getVideoId(), userRequest.getFormat(), userRequest.getQualityVideo());
 
         if (maybeUploadedFile.isPresent()) {
             var uploadedFile = maybeUploadedFile.get();

@@ -14,7 +14,8 @@ public class UploadedFileReadMapper implements Mapper<UploadedFile, UploadedFile
                 object.getId(),
                 object.getYoutubeVideoId(),
                 object.getTelegramFileId(),
-                object.getType()
+                object.getType(),
+                object.getQualityVideo()
         );
     }
 }

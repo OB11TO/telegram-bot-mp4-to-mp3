@@ -1,7 +1,5 @@
 package com.ob11to.telegrambotswitch.service;
 
-import com.ob11to.telegrambotswitch.dto.Request;
-import com.ob11to.telegrambotswitch.entity.ContentType;
 import org.springframework.stereotype.Service;
 
 import java.util.regex.Pattern;
@@ -31,12 +29,5 @@ public class UserInputParser {
         return null;
     }
 
-    public Request processInputMessage(String message, ContentType type, String code) {
-        return new Request(getYouTubeVideoId(message),
-                type,
-                code,
-                false);
-
-    }
 }
 

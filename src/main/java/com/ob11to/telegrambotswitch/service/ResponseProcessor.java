@@ -29,7 +29,8 @@ public class ResponseProcessor {
         return new Response(
                 type,
                 videoId,
-                folderManagerService.getPath()
+                folderManagerService.getPath(),
+                request.getQualityVideo()
         );
     }
 

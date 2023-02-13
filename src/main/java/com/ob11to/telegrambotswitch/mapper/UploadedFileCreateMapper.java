@@ -13,6 +13,7 @@ public class UploadedFileCreateMapper implements Mapper<UploadedFileCreateDto, U
                 .youtubeVideoId(object.getYoutubeVideoId())
                 .telegramFileId(object.getTelegramFileId())
                 .type(object.getType())
+                .qualityVideo(object.getQualityVideo())
                 .build();
     }
 }

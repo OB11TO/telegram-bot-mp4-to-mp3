@@ -12,8 +12,8 @@ import java.util.Optional;
 public interface UploadedFileRepository extends JpaRepository<UploadedFile, Long> {
 
     @Query("select uf from UploadedFile uf " +
-            "where uf.youtubeVideoId = :videoId and uf.type = :format")
-    Optional<UploadedFile> findByVideoIdAndFormat(String videoId, ContentType format);
+            "where uf.youtubeVideoId = :videoId and uf.type = :format and uf.qualityVideo = :qualityVideo")
+    Optional<UploadedFile> findByVideoIdAndFormat(String videoId, ContentType format, Integer qualityVideo);
 
     void deleteUploadedFileByTelegramFileId(String telegramFileId);
 }

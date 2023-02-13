@@ -35,4 +35,7 @@ public class UploadedFile extends AuditingEntity<Long> {
     @Column(name = "media_type", nullable = false)
     @Enumerated(EnumType.STRING)
     private ContentType type;
+
+    @Column(name = "quality_video")
+    private Integer qualityVideo;
 }
