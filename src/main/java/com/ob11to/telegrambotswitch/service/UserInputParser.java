@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 @Service
 public class UserInputParser {
 
-    private static final String YOUTUBE_URL_PATTERN_V1 = "(?<=watch\\?v=|/videos/|embed/|youtu.be/|/v/|/e/|watch\\?v%3D|watch\\?feature=player_embedded&v=|%2Fvideos%2F|embed%\u200C\u200B2F|youtu.be%2F|%2Fv%2F)[^#&?\\n]*";
+    private static final String YOUTUBE_URL_PATTERN_V1 = "(?<=watch\\?v=|/videos/|embed/|shorts/|youtu.be/|/v/|/e/|watch\\?v%3D|watch\\?feature=player_embedded&v=|%2Fvideos%2F|embed%\u200C\u200B2F|youtu.be%2F|%2Fv%2F)[^#&?\\n]*";
     private static final String YOUTUBE_URL_PATTERN_V2 = "https?://(?:[0-9A-Z-]+\\.)?(?:youtu\\.be/|youtube\\.com\\S*[^\\w\\-\\s])([\\w\\-]{11})(?=[^\\w\\-]|$)(?![?=&+%\\w]*(?:['\"][^<>]*>|</a>))[?=&+%\\w]*";
     private final Pattern PATTERN_V1;
     private final Pattern PATTERN_V2;
@@ -28,6 +28,5 @@ public class UserInputParser {
             return youtubeUrlMatcherV2.group();
         return null;
     }
-
 }
 

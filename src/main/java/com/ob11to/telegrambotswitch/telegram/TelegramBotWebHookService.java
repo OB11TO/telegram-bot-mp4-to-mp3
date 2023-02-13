@@ -14,6 +14,7 @@ import com.ob11to.telegrambotswitch.service.ResponseProcessor;
 import com.ob11to.telegrambotswitch.service.UploadedFileService;
 import com.ob11to.telegrambotswitch.service.UserInputParser;
 import com.ob11to.telegrambotswitch.service.UserTelegramService;
+import com.ob11to.telegrambotswitch.service.youtube.YouTubeDownloaderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -79,6 +80,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
     private final UploadedFileService uploadedFileService;
     private final ResponseProcessor responseProcessor;
     private final FolderManagerService folderManagerService;
+    private final YouTubeDownloaderService youTubeDownloaderService;
 
     @Override
     public String getBotUsername() {
@@ -325,7 +327,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
         userTelegramService.changeBotStateByChatId(chatId, BUSY);
         log.info("Change bot state to BUSY for chatId: " + chatId);
 
-
+        youTubeDownloaderService.setLINK(message.getText());
         String videoId = userInputParser.getYouTubeVideoId(message.getText());
 
         if (videoId == null) {
