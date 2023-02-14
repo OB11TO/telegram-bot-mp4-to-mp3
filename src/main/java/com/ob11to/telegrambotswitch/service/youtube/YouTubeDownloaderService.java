@@ -77,7 +77,7 @@ public class YouTubeDownloaderService {
     public void stopDownloading() {
         if (process.isAlive()) {
             String nameImageLinux = "yt-dlp";
-            String nameImageWin = "youtube-dl.exe";
+            String nameImageWin = "yt-dlp";
             ProcessBuilder pb = new ProcessBuilder();
             Process start;
             try {
