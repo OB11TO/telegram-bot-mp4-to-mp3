@@ -37,7 +37,26 @@ import java.util.Optional;
 
 import static com.ob11to.telegrambotswitch.entity.TelegramBotState.BUSY;
 import static com.ob11to.telegrambotswitch.entity.TelegramBotState.READY;
-import static com.ob11to.telegrambotswitch.util.MessageResponse.*;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.BEGIN_LOADING;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.CHOSE_ANOTHER_FORMAT;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.CHOSE_FORMAT;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.CHOSE_QUALITY;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.CLICK_STOP_IN_READY;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.CREATE;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.DONE;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.ERROR_SIZE_TRY_AGAIN;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.FILE_FOUND;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.FILE_IS_TOO_BIG;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.HELP;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.INFO;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.INFO_AFTER_STOP;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.INVALID_INPUT;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.PREPARE_TO_LOAD;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.SEND_LINK;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.SEND_TO_TELEGRAM;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.START;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.STOP_DOWNLOAD;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.WAIT;
 
 @Slf4j
 @Service
