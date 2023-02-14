@@ -12,12 +12,14 @@ import com.ob11to.telegrambotswitch.exception.YouTubeSizeException;
 import com.ob11to.telegrambotswitch.service.FolderManagerService;
 import com.ob11to.telegrambotswitch.service.ReplyMessageService;
 import com.ob11to.telegrambotswitch.service.ResponseProcessor;
+import com.ob11to.telegrambotswitch.service.SendTelegramMessageService;
 import com.ob11to.telegrambotswitch.service.UploadedFileService;
 import com.ob11to.telegrambotswitch.service.UserInputParser;
 import com.ob11to.telegrambotswitch.service.UserTelegramService;
 import com.ob11to.telegrambotswitch.service.youtube.YouTubeDownloaderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.bots.TelegramWebhookBot;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
@@ -53,6 +55,7 @@ import static com.ob11to.telegrambotswitch.util.MessageResponse.INFO_AFTER_STOP;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.INVALID_INPUT;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.PREPARE_TO_LOAD;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.SEND_LINK;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.SEND_MESSAGE_SCHEDULE;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.SEND_TO_TELEGRAM;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.START;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.STOP_DOWNLOAD;
@@ -83,6 +86,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
     private final ResponseProcessor responseProcessor;
     private final FolderManagerService folderManagerService;
     private final YouTubeDownloaderService youTubeDownloaderService;
+    private final SendTelegramMessageService service;
 
     @Override
     public String getBotUsername() {
@@ -97,6 +101,19 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
     @Override
     public String getBotPath() {
         return config.getBotPath();
+    }
+
+    @Scheduled(cron = "0/10 * * * * *")
+    public void scheduleSendTelegramMessage() {
+        var userReadyBot = userTelegramService.getAllUserReadyBot();
+        for (UserTelegramReadDto user : userReadyBot) {
+            try {
+                execute(replyMessageService.getReplyMessage(user.getChatId(), SEND_MESSAGE_SCHEDULE));
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+                log.error("Error while executing message ", e);
+            }
+        }
     }
 
 
