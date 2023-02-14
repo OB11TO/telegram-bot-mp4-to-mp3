@@ -20,6 +20,17 @@ public class ReplyMessageService {
                 .build();
     }
 
+    public SendMessage getReplyMessageUsername(Long chatId, String replyMessage) {
+        var id = String.valueOf(chatId);
+//        return new SendMessage(id, localeMessageService.getMessage(replyMessage));
+
+        return SendMessage.builder()
+                .chatId(chatId)
+                .text(replyMessage)
+                .parseMode(MARKDOWN)
+                .build();
+    }
+
     public SendMessage getReplyText(Long chatId, String replyMessage) {
         return SendMessage.builder()
                 .chatId(chatId)

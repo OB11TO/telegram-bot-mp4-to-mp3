@@ -48,7 +48,8 @@ public class MessageResponse {
             Или нажми /stop 👈 если больше не хочешь ждать* 🧘""";
     public static final String STOP_DOWNLOAD = "*🔮: Процесс остановлен* ⛔";
     public static final String INFO_AFTER_STOP = "*🔮: Попробуем еще раз? Пришли ссылку на видео* ✨";
-    public static final String DONE = "*🔮: Держи, %s 🎁 Всё готово* 💫";
+    public static final String ERROR_SIZE_TRY_AGAIN = "*🔮: Давай по новой\\! Пришли ссылку на видео* ✨";
+    public static final String DONE = "🔮: *Держи, %s 🎁 Всё готово* 💫";
     public static final String PREPARE_TO_LOAD = "*🔮: Готовлюсь к скачиванию* 🧳";
     public static final String BEGIN_LOADING = "*🔮: Начал загрузку* 🚀";
     public static final String SEND_TO_TELEGRAM = "*🔮: Отправляю* 🛰";

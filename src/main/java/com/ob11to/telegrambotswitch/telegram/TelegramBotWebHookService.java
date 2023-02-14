@@ -8,6 +8,7 @@ import com.ob11to.telegrambotswitch.dto.UploadedFileCreateDto;
 import com.ob11to.telegrambotswitch.dto.UploadedFileReadDto;
 import com.ob11to.telegrambotswitch.dto.UserTelegramReadDto;
 import com.ob11to.telegrambotswitch.entity.ContentType;
+import com.ob11to.telegrambotswitch.exception.YouTubeSizeException;
 import com.ob11to.telegrambotswitch.service.FolderManagerService;
 import com.ob11to.telegrambotswitch.service.ReplyMessageService;
 import com.ob11to.telegrambotswitch.service.ResponseProcessor;
@@ -43,6 +44,7 @@ import static com.ob11to.telegrambotswitch.util.MessageResponse.CHOSE_QUALITY;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.CLICK_STOP_IN_READY;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.CREATE;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.DONE;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.ERROR_SIZE_TRY_AGAIN;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.FILE_FOUND;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.FILE_IS_TOO_BIG;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.HELP;
@@ -223,13 +225,18 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
                 if (folderManagerService.getFileSize(userRequest) >= MAX_UPLOADED_FILE_SIZE) {
                     execute(replyMessageService.getReplyMessage(chatId, FILE_IS_TOO_BIG));
                     folderManagerService.clean(userRequest, true);
-                    throw new RuntimeException();
+                    throw new YouTubeSizeException("Большой размер файла для отправки в телеграмм!");
                 }
                 uploadFileInTelegram(chatId, userRequest, userResponse);
                 folderManagerService.clean(userRequest, false);
-                execute(replyMessageService.getReplyMessage(chatId, String.format(DONE, userName)));
+                execute(replyMessageService.getReplyMessageUsername(chatId, String.format(DONE, userName)));
 
             }
+        } catch (YouTubeSizeException exception) {
+            log.info("Size Can`t execute format mp4 for video : " + userRequest.getVideoId() + " with quality " + userRequest.getQualityCode());
+            folderManagerService.clean(userRequest, false);
+            execute(replyMessageService.getReplyMessage(chatId, ERROR_SIZE_TRY_AGAIN));
+
         } catch (RuntimeException e) {
             try {
                 log.info("Can`t execute format mp4 for video : " + userRequest.getVideoId() + " with quality " + userRequest.getQualityCode());
@@ -317,7 +324,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
                 return false;
             }
             log.info("Load file in telegram file with id: " + userRequest.getVideoId() + " format: " + userRequest.getFormat() + " quality: " + userRequest.getQualityCode());
-            execute(replyMessageService.getReplyMessage(chatId, String.format(DONE, userName)));
+            execute(replyMessageService.getReplyMessageUsername(chatId, String.format(DONE, userName)));
             return true;
         }
         return false;
