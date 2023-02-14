@@ -4,7 +4,7 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class MessageResponse {
-    public static final String CREATE = "||*🔮: Мы еще не знакомы, но скоро запомнишь моё имя*||👁";
+    public static final String CREATE = "||*🔮: Мы еще не знакомы, но скоро ты запомнишь моё имя*|| 👁";
     public static final String START = """
             🔮: *Добро пожаловать*
                         
@@ -62,6 +62,8 @@ public class MessageResponse {
     public static final String FILE_IS_TOO_BIG = "*🔮: Твой файл превышает допустимый размер, я его качать не буду* 👿";
     public static final String CLICK_STOP_IN_READY = "*🔮: Не получится ничего остановить, я ещё не начинал загрузку* 🌐";
     public static final String SEND_LINK = "*🔮: Пришли мне ссылку на _YouTube_ видео, которое нужно* 🎯";
+
+    public static final String SEND_MESSAGE_SCHEDULE = "*🔮: А ШО ЭТО МЫ НИЧЕГО НЕ КАЧАЕМ, А ??? \uD83E\uDD28*";
 
 
 }

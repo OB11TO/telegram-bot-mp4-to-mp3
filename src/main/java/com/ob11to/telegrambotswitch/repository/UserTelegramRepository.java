@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -23,4 +24,10 @@ public interface UserTelegramRepository extends JpaRepository<UserTelegram, Long
             "where u.chatId = :chatId"
     )
     void changeBotStateByChatId(Long chatId, TelegramBotState ready, Instant newTime);
+
+    @Query("select u " +
+            "from UserTelegram u " +
+            "where u.botState = 'READY'"
+    )
+    List<UserTelegram> findAllUserReady();
 }

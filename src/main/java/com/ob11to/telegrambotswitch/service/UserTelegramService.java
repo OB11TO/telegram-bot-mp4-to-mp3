@@ -11,7 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +27,12 @@ public class UserTelegramService {
     public Optional<UserTelegramReadDto> getUserBotChatId(Long chatId) {
         return userTelegramRepository.findByChatId(chatId)
                 .map(userTelegramMapper::map);
+    }
+
+    public List<UserTelegramReadDto> getAllUserReadyBot() {
+        return userTelegramRepository.findAllUserReady().stream()
+                .map(userTelegramMapper::map)
+                .collect(Collectors.toList());
     }
 
     @Transactional
