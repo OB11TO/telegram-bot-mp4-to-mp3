@@ -18,6 +18,7 @@ import com.ob11to.telegrambotswitch.service.UserTelegramService;
 import com.ob11to.telegrambotswitch.service.youtube.YouTubeDownloaderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.bots.TelegramWebhookBot;
@@ -31,9 +32,6 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.io.File;
-import java.util.Arrays;
-import java.util.Objects;
 import java.util.Optional;
 
 import static com.ob11to.telegrambotswitch.entity.TelegramBotState.BUSY;
@@ -59,21 +57,19 @@ import static com.ob11to.telegrambotswitch.util.MessageResponse.SEND_TO_TELEGRAM
 import static com.ob11to.telegrambotswitch.util.MessageResponse.START;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.STOP_DOWNLOAD;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.WAIT;
+import static com.ob11to.telegrambotswitch.util.YtDlpOptions.MAX_UPLOADED_FILE_SIZE;
+import static com.ob11to.telegrambotswitch.util.YtDlpOptions.MP3;
+import static com.ob11to.telegrambotswitch.util.YtDlpOptions.MP3_QUALITY_CODE;
+import static com.ob11to.telegrambotswitch.util.YtDlpOptions.MP4_360;
+import static com.ob11to.telegrambotswitch.util.YtDlpOptions.MP4_360_QUALITY_CODE;
+import static com.ob11to.telegrambotswitch.util.YtDlpOptions.MP4_720;
+import static com.ob11to.telegrambotswitch.util.YtDlpOptions.MP4_720_QUALITY_CODE;
+import static com.ob11to.telegrambotswitch.util.YtDlpOptions.MP4_FOR_TIKTOK;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class TelegramBotWebHookService extends TelegramWebhookBot {
-
-    private final static double MAX_UPLOADED_FILE_SIZE = 50;  //TODO сделать проверку на максимальный размер файла
-    private final static String MP4_360_QUALITY_CODE = "18";
-    private final static String MP4_720_QUALITY_CODE = "136+140";
-    private final static String MP3_QUALITY_CODE = "140";
-    private final static Integer MP4_360 = 360;
-    private final static Integer MP4_720 = 720;
-    private final static Integer MP3 = 0;
-
-    private static final File PATH = new File("/home/obiito/c/youtube/test"); //test
 
     private final TelegramBotConfig config;
     private final UserTelegramService userTelegramService;
@@ -161,7 +157,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
         return null;
     }
 
-    private void processUpdate(UserTelegramReadDto userTelegram, Message message) {
+    private void processUpdate(UserTelegramReadDto userTelegram, @NotNull Message message) {
         try {
             if (message.getText().equals("/start")) {
                 execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), START));
@@ -189,7 +185,40 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
         }
     }
 
-    private void processCallBack(Long chatId, String message, Request userRequest, String userName) throws TelegramApiException {
+    private void botIsReadyToProcessUrl(Long chatId, @NotNull Message message, String username) throws TelegramApiException {
+        userTelegramService.changeBotStateByChatId(chatId, BUSY);
+        log.info("Change bot state to BUSY for chatId: " + chatId);
+
+        youTubeDownloaderService.setLINK(message.getText());
+        String videoId = userInputParser.getYouTubeVideoId(message.getText());
+
+        if (videoId == null) {
+            execute(replyMessageService.getReplyMessage(chatId, INVALID_INPUT));
+            log.info("Invalid url from user, input: " + message.getText());
+            userTelegramService.changeBotStateByChatId(chatId, READY);
+            log.info("Change bot state to READY for chatId: " + chatId);
+        } else if (message.getText().contains("tiktok")) {
+            execute(replyMessageService.getReplyMessage(chatId, FILE_FOUND));
+            Request userRequest = new Request();
+            userRequest.setVideoId(videoId);
+            userRequest.setFormat(ContentType.mp4);
+            userRequest.setQualityVideo(MP4_FOR_TIKTOK);
+            requestsStorage.addRequest(chatId, userRequest);
+            log.info("Put request to map with chatId: " + chatId + " videoId: " + videoId);
+            sendFileInFormat(chatId, "tiktok", userRequest, username);
+        } else {
+            execute(replyMessageService.getReplyMessage(chatId, FILE_FOUND));
+            Request userRequest = new Request();
+            userRequest.setVideoId(videoId);
+            requestsStorage.addRequest(chatId, userRequest);
+            log.info("Put request to map with chatId: " + chatId + " videoId: " + videoId);
+            SendMessage choseFormatMessage = replyMessageService.getReplyText(chatId, CHOSE_FORMAT);
+            choseFormatMessage.setReplyMarkup(telegramFacade.createBlockButtons(telegramFacade.getMediaFormats()));
+            execute(choseFormatMessage);
+        }
+    }
+
+    private void processCallBack(Long chatId, @NotNull String message, Request userRequest, String userName) throws TelegramApiException {
         switch (message) {
             case "mp3" -> {
                 log.info("Callback mp3 from chatId: " + chatId);
@@ -267,18 +296,18 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
         log.info("Change bot state to READY for chatId: " + chatId);
     }
 
-    private void uploadFileInTelegram(Long chatId, Request userRequest, Response userResponse) throws TelegramApiException {
+    private void uploadFileInTelegram(Long chatId, @NotNull Request userRequest, Response userResponse) throws TelegramApiException {
         String telegramFileId;
         if (userRequest.getFormat().equals(ContentType.mp3)) {
             SendAudio audio = new SendAudio();
             audio.setChatId(chatId);
-            InputFile inputFile = getInputFile(userResponse, "m4a");
+            InputFile inputFile = folderManagerService.getInputFile(userResponse, "m4a");
             audio.setAudio(inputFile);
             telegramFileId = execute(audio).getAudio().getFileId();
         } else {
             SendVideo video = new SendVideo();
             video.setChatId(chatId);
-            InputFile inputFile = getInputFile(userResponse, "mp4");
+            InputFile inputFile = folderManagerService.getInputFile(userResponse, "mp4");
             video.setVideo(inputFile);
             telegramFileId = execute(video).getVideo().getFileId();
         }
@@ -290,24 +319,13 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
                         telegramFileId,
                         userResponse.getContentType(),
                         userResponse.getQualityVideo());
-        var file = uploadedFileService.createFile(uploadedFileCreateDto);
+        uploadedFileService.createFile(uploadedFileCreateDto);
         log.info("Save file with id: " + userRequest.getVideoId() +
                 " format: " + userRequest.getFormat() + " quality: " + userRequest.getQualityCode());
 
     }
 
-    private InputFile getInputFile(Response userResponse, String type) {
-        var name = userResponse.getName();
-        File path = new File(folderManagerService.getPath());
-        File[] matchingFiles = path.listFiles((dir, file) -> file.contains(name) && file.endsWith(type));
-        Optional<File> maybeFile = Arrays.stream(Objects.requireNonNull(matchingFiles)).findFirst();
-        var file = maybeFile.orElseThrow(() -> new RuntimeException("File is not found"));
-        InputFile inputFile = new InputFile();
-        inputFile.setMedia(file);
-        return inputFile;
-    }
-
-    private boolean checkIfFileAlreadyExist(Long chatId, Request userRequest, String userName) throws TelegramApiException {
+    private boolean checkIfFileAlreadyExist(Long chatId, @NotNull Request userRequest, String userName) throws TelegramApiException {
         Optional<UploadedFileReadDto> maybeUploadedFile = uploadedFileService.getFileByVideoIdAndType(userRequest.getVideoId(), userRequest.getFormat(), userRequest.getQualityVideo());
 
         if (maybeUploadedFile.isPresent()) {
@@ -343,39 +361,6 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
             return true;
         }
         return false;
-    }
-
-    private void botIsReadyToProcessUrl(Long chatId, Message message, String username) throws TelegramApiException {
-        userTelegramService.changeBotStateByChatId(chatId, BUSY);
-        log.info("Change bot state to BUSY for chatId: " + chatId);
-
-        youTubeDownloaderService.setLINK(message.getText());
-        String videoId = userInputParser.getYouTubeVideoId(message.getText());
-
-        if (videoId == null) {
-            execute(replyMessageService.getReplyMessage(chatId, INVALID_INPUT));
-            log.info("Invalid url from user, input: " + message.getText());
-            userTelegramService.changeBotStateByChatId(chatId, READY);
-            log.info("Change bot state to READY for chatId: " + chatId);
-        } else if (message.getText().contains("tiktok")) {
-            execute(replyMessageService.getReplyMessage(chatId, FILE_FOUND));
-            Request userRequest = new Request();
-            userRequest.setVideoId(videoId);
-            userRequest.setFormat(ContentType.mp4);
-            userRequest.setQualityVideo(111);
-            requestsStorage.addRequest(chatId, userRequest);
-            log.info("Put request to map with chatId: " + chatId + " videoId: " + videoId);
-            sendFileInFormat(chatId, "tiktok", userRequest, username);
-        } else {
-            execute(replyMessageService.getReplyMessage(chatId, FILE_FOUND));
-            Request userRequest = new Request();
-            userRequest.setVideoId(videoId);
-            requestsStorage.addRequest(chatId, userRequest);
-            log.info("Put request to map with chatId: " + chatId + " videoId: " + videoId);
-            SendMessage choseFormatMessage = replyMessageService.getReplyText(chatId, CHOSE_FORMAT);
-            choseFormatMessage.setReplyMarkup(telegramFacade.createBlockButtons(telegramFacade.getMediaFormats()));
-            execute(choseFormatMessage);
-        }
     }
 
     public void deleteMessage(long chatId, int messageId) {

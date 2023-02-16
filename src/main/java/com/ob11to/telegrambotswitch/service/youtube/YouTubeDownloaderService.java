@@ -18,19 +18,19 @@ public class YouTubeDownloaderService {
     private final static String STANDARD_DL_COMMAND_WITH_FORMAT_OPTIONS = "yt-dlp -f %s ";
 //    private final static String STANDARD_DL_COMMAND_WITH_FORMAT_OPTIONS_TIK_TOK = "yt-dlp -o '%(id)s.%(ext)s' ";
     private final static String STANDARD_DL_COMMAND_WITH_FORMAT_OPTIONS_TIK_TOK = "yt-dlp -o %s.mp4 ";
-//    private final static String STANDARD_DL_PATH_OPTION = " -o %s/%(title)s.%(ext)s ";
 
     private final static String TERMINAL_BASH = "/bin/sh";
     private final static String TERMINAL_CMD = "cmd.exe";
     private final static String END_COMMAND_BASH = "-c";
     private final static String END_COMMAND_CMD = "/c";
 
+    private final FolderManagerService folderManagerService;
+
     @Setter
     private String LINK;
 
     private Process process;
 
-    private final FolderManagerService folderManagerService;
 
     @Autowired
     public YouTubeDownloaderService(FolderManagerService folderManagerService) {
