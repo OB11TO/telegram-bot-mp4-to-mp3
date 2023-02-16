@@ -1,7 +1,6 @@
 package com.ob11to.telegrambotswitch.service.youtube;
 
 import com.ob11to.telegrambotswitch.dto.Request;
-import com.ob11to.telegrambotswitch.entity.ContentType;
 import com.ob11to.telegrambotswitch.service.FolderManagerService;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +16,8 @@ public class YouTubeDownloaderService {
 
     private final static String YOUTUBE_VIDEO_URL = "https://www.youtube.com/watch?v=%s";
     private final static String STANDARD_DL_COMMAND_WITH_FORMAT_OPTIONS = "yt-dlp -f %s ";
+//    private final static String STANDARD_DL_COMMAND_WITH_FORMAT_OPTIONS_TIK_TOK = "yt-dlp -o '%(id)s.%(ext)s' ";
+    private final static String STANDARD_DL_COMMAND_WITH_FORMAT_OPTIONS_TIK_TOK = "yt-dlp -o %s.mp4 ";
 //    private final static String STANDARD_DL_PATH_OPTION = " -o %s/%(title)s.%(ext)s ";
 
     private final static String TERMINAL_BASH = "/bin/sh";
@@ -102,20 +103,13 @@ public class YouTubeDownloaderService {
         }
     }
 
-    private String buildCommand(Request request) {
+    private String buildCommandTest(Request request) {
         String finalFormat;
-        if (request.getFormat().equals(ContentType.mp3)) {
-            finalFormat = String.format(STANDARD_DL_COMMAND_WITH_FORMAT_OPTIONS, "bestaudio");
+        if(request.getQualityCode().equals("tiktok")) {
+            finalFormat = String.format(STANDARD_DL_COMMAND_WITH_FORMAT_OPTIONS_TIK_TOK, request.getVideoId());
         } else {
             finalFormat = String.format(STANDARD_DL_COMMAND_WITH_FORMAT_OPTIONS, request.getQualityCode());
         }
-        return finalFormat
-                + String.format(YOUTUBE_VIDEO_URL, request.getVideoId());
-    }
-
-    private String buildCommandTest(Request request) {
-        String finalFormat;
-        finalFormat = String.format(STANDARD_DL_COMMAND_WITH_FORMAT_OPTIONS, request.getQualityCode());
         return finalFormat
                 + LINK;
     }

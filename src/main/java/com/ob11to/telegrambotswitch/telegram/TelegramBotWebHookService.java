@@ -12,7 +12,6 @@ import com.ob11to.telegrambotswitch.exception.YouTubeSizeException;
 import com.ob11to.telegrambotswitch.service.FolderManagerService;
 import com.ob11to.telegrambotswitch.service.ReplyMessageService;
 import com.ob11to.telegrambotswitch.service.ResponseProcessor;
-import com.ob11to.telegrambotswitch.service.SendTelegramMessageService;
 import com.ob11to.telegrambotswitch.service.UploadedFileService;
 import com.ob11to.telegrambotswitch.service.UserInputParser;
 import com.ob11to.telegrambotswitch.service.UserTelegramService;
@@ -86,7 +85,6 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
     private final ResponseProcessor responseProcessor;
     private final FolderManagerService folderManagerService;
     private final YouTubeDownloaderService youTubeDownloaderService;
-    private final SendTelegramMessageService service;
 
     @Override
     public String getBotUsername() {
@@ -103,7 +101,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
         return config.getBotPath();
     }
 
-    @Scheduled(cron = "0/10 * * * * *")
+    @Scheduled(cron = "11 11 11 * * *")
     public void scheduleSendTelegramMessage() {
         var userReadyBot = userTelegramService.getAllUserReadyBot();
         for (UserTelegramReadDto user : userReadyBot) {
@@ -175,7 +173,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
                 execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), CLICK_STOP_IN_READY));
                 execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), SEND_LINK));
             } else if (userTelegram.getState() == READY && !message.getText().isEmpty()) {
-                botIsReadyToProcessUrl(userTelegram.getChatId(), message);
+                botIsReadyToProcessUrl(userTelegram.getChatId(), message, userTelegram.getUsername());
             } else if (userTelegram.getState() == BUSY && message.getText().equals("/stop")) {
                 execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), STOP_DOWNLOAD));
                 execute(replyMessageService.getReplyMessage(userTelegram.getChatId(), INFO_AFTER_STOP));
@@ -271,18 +269,18 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
 
     private void uploadFileInTelegram(Long chatId, Request userRequest, Response userResponse) throws TelegramApiException {
         String telegramFileId;
-        if (userRequest.getFormat().equals(ContentType.mp4)) {
-            SendVideo video = new SendVideo();
-            video.setChatId(chatId);
-            InputFile inputFile = getInputFile(userResponse, "mp4");
-            video.setVideo(inputFile);
-            telegramFileId = execute(video).getVideo().getFileId();
-        } else {
+        if (userRequest.getFormat().equals(ContentType.mp3)) {
             SendAudio audio = new SendAudio();
             audio.setChatId(chatId);
             InputFile inputFile = getInputFile(userResponse, "m4a");
             audio.setAudio(inputFile);
             telegramFileId = execute(audio).getAudio().getFileId();
+        } else {
+            SendVideo video = new SendVideo();
+            video.setChatId(chatId);
+            InputFile inputFile = getInputFile(userResponse, "mp4");
+            video.setVideo(inputFile);
+            telegramFileId = execute(video).getVideo().getFileId();
         }
         log.info("Load file with id: " + userRequest.getVideoId() +
                 " format: " + userRequest.getFormat() + " quality: " + userRequest.getQualityCode());
@@ -347,7 +345,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
         return false;
     }
 
-    private void botIsReadyToProcessUrl(Long chatId, Message message) throws TelegramApiException {
+    private void botIsReadyToProcessUrl(Long chatId, Message message, String username) throws TelegramApiException {
         userTelegramService.changeBotStateByChatId(chatId, BUSY);
         log.info("Change bot state to BUSY for chatId: " + chatId);
 
@@ -359,6 +357,15 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
             log.info("Invalid url from user, input: " + message.getText());
             userTelegramService.changeBotStateByChatId(chatId, READY);
             log.info("Change bot state to READY for chatId: " + chatId);
+        } else if (message.getText().contains("tiktok")) {
+            execute(replyMessageService.getReplyMessage(chatId, FILE_FOUND));
+            Request userRequest = new Request();
+            userRequest.setVideoId(videoId);
+            userRequest.setFormat(ContentType.mp4);
+            userRequest.setQualityVideo(111);
+            requestsStorage.addRequest(chatId, userRequest);
+            log.info("Put request to map with chatId: " + chatId + " videoId: " + videoId);
+            sendFileInFormat(chatId, "tiktok", userRequest, username);
         } else {
             execute(replyMessageService.getReplyMessage(chatId, FILE_FOUND));
             Request userRequest = new Request();
