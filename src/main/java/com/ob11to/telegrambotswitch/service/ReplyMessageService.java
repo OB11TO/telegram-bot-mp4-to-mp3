@@ -10,9 +10,6 @@ import static org.telegram.telegrambots.meta.api.methods.ParseMode.MARKDOWNV2;
 public class ReplyMessageService {
 
     public SendMessage getReplyMessage(Long chatId, String replyMessage) {
-        var id = String.valueOf(chatId);
-//        return new SendMessage(id, localeMessageService.getMessage(replyMessage));
-
         return SendMessage.builder()
                 .chatId(chatId)
                 .text(replyMessage)
@@ -21,9 +18,6 @@ public class ReplyMessageService {
     }
 
     public SendMessage getReplyMessageUsername(Long chatId, String replyMessage) {
-        var id = String.valueOf(chatId);
-//        return new SendMessage(id, localeMessageService.getMessage(replyMessage));
-
         return SendMessage.builder()
                 .chatId(chatId)
                 .text(replyMessage)
