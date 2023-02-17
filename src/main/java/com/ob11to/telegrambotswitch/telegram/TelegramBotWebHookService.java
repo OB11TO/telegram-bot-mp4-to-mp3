@@ -57,6 +57,7 @@ import static com.ob11to.telegrambotswitch.util.MessageResponse.SEND_TO_TELEGRAM
 import static com.ob11to.telegrambotswitch.util.MessageResponse.START;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.STOP_DOWNLOAD;
 import static com.ob11to.telegrambotswitch.util.MessageResponse.WAIT;
+import static com.ob11to.telegrambotswitch.util.MessageResponse.WAIT_DOWNLOAD;
 import static com.ob11to.telegrambotswitch.util.YtDlpOptions.MAX_UPLOADED_FILE_SIZE;
 import static com.ob11to.telegrambotswitch.util.YtDlpOptions.MP3;
 import static com.ob11to.telegrambotswitch.util.YtDlpOptions.MP3_QUALITY_CODE;
@@ -97,7 +98,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
         return config.getBotPath();
     }
 
-    @Scheduled(cron = "11 11 11 * * *")
+    @Scheduled(cron = "30 35 12 * * *")
     public void scheduleSendTelegramMessage() {
         var userReadyBot = userTelegramService.getAllUserReadyBot();
         for (UserTelegramReadDto user : userReadyBot) {
@@ -261,6 +262,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
                 requestsStorage.updateRequest(chatId, userRequest);
                 execute(replyMessageService.getReplyMessage(chatId, PREPARE_TO_LOAD));
                 execute(replyMessageService.getReplyMessage(chatId, BEGIN_LOADING));
+                execute(replyMessageService.getReplyMessage(chatId, WAIT_DOWNLOAD));
                 Response userResponse = responseProcessor.processResponse(userRequest);
                 execute(replyMessageService.getReplyMessage(chatId, SEND_TO_TELEGRAM));
 

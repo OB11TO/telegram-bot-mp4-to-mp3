@@ -47,6 +47,7 @@ public class MessageResponse {
             *🔮: Идёт обработка запроса, подожди ещё немного ⏳
             Или нажми /stop 👈 если больше не хочешь ждать* 🧘""";
     public static final String STOP_DOWNLOAD = "*🔮: Процесс остановлен* ⛔";
+    public static final String WAIT_DOWNLOAD = "*🔮: Подожди немного* ⏳";
     public static final String INFO_AFTER_STOP = "*🔮: Попробуем еще раз? Пришли ссылку на видео* ✨";
     public static final String ERROR_SIZE_TRY_AGAIN = "*🔮: Давай по новой\\! Пришли ссылку на видео* ✨";
     public static final String DONE = "🔮: *Держи, %s 🎁 Всё готово* 💫";
@@ -63,7 +64,15 @@ public class MessageResponse {
     public static final String CLICK_STOP_IN_READY = "*🔮: Не получится ничего остановить, я ещё не начинал загрузку* 🌐";
     public static final String SEND_LINK = "*🔮: Пришли мне ссылку на _YouTube_ видео, которое нужно* 🎯";
 
-    public static final String SEND_MESSAGE_SCHEDULE = "*🔮: А ШО ЭТО МЫ НИЧЕГО НЕ КАЧАЕМ, А ??? \uD83E\uDD28*";
+    public static final String SEND_MESSAGE_SCHEDULE = """
+            *🔮: Мечты\\. У каждого есть мечты\\. Каждый хочет, чтобы они исполнялись\\. Мечта мучит человека, но она наполняет его жизнь смыслом\\. 🌠
+             
+            Я не могу исполнить твою мечту\\.\\.\\.
+            Но могу сохранить твои любимые видео,
+            чтобы ты мог насладиться ими\\!
+             
+            Пришли мне ссылку, чтобы я смог сделать это 👁*
+            """;
 
 
 }
