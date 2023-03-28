@@ -6,4 +6,4 @@
 
 
 🤖Telegram Bot - 🔮 Performs the role of converting videos from YouTube to mp3 format🎞📲 
-(Doc)
+(Doc + config)
