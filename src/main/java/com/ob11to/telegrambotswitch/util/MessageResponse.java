@@ -9,7 +9,8 @@ public class MessageResponse {
             🔮: *Добро пожаловать*
                         
             _📍__Что я умею?___
-            📍_Скачивать видео с *[YouTube](https://youtube.com/)* в разных форматах_ 📲
+            _Скачивать видео с *[YouTube](https://youtube.com/)* в разных форматах_ 📲
+            _Скачивать видео с *[TikTok](https://www.tiktok.com/)* в разных форматах_ 📲
             _Premium Youtube больше не нужен_ 🔑
                         
             _📍__Что мне нужно от тебя?___
