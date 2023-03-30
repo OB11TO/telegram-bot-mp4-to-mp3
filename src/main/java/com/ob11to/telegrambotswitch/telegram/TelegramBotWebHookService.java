@@ -98,7 +98,7 @@ public class TelegramBotWebHookService extends TelegramWebhookBot {
         return config.getBotPath();
     }
 
-    @Scheduled(cron = "30 35 12 * * *")
+    @Scheduled(cron = "22 22 22 1 * *")
     public void scheduleSendTelegramMessage() {
         var userReadyBot = userTelegramService.getAllUserReadyBot();
         for (UserTelegramReadDto user : userReadyBot) {
