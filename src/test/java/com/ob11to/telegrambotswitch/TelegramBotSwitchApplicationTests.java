@@ -8,7 +8,7 @@ class TelegramBotSwitchApplicationTests {
 
     @Test
     void contextLoads() {
-        System.out.println("Тесты");
+        System.out.println("Тест");
     }
 
 }
